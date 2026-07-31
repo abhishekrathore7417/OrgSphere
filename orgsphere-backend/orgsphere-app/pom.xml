@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orgsphere</groupId>
+        <artifactId>orgsphere-parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>orgsphere-app</artifactId>
+    <packaging>jar</packaging>
+    <name>orgsphere-app</name>
+    <description>Boot application module: main class, configuration, AdminController</description>
+
+    <dependencies>
+        <!-- All modules aggregated here -->
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-organization</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-user</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-subscription</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-company</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-school</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-payment</artifactId>
+        </dependency>
+
+        <!-- Runtime dependencies needed only at app startup -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Twilio for SMS -->
+        <dependency>
+            <groupId>com.twilio.sdk</groupId>
+            <artifactId>twilio</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Override parent skip=true to enable the Spring Boot fat jar only here -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <skip>false</skip>
+                    <mainClass>com.orgsphere.OrgsphereBackendApplication</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

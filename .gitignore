@@ -1,0 +1,22 @@
+# IntelliJ / WebStorm
+.idea/
+*.iml
+
+# Frontend
+orgsphere-frontend/node_modules/
+orgsphere-frontend/dist/
+orgsphere-frontend/.env
+
+# Backend (Maven)
+**/target/
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Environment
+.env

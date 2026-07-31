@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+         https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.orgsphere</groupId>
+        <artifactId>orgsphere-parent</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>orgsphere-auth</artifactId>
+    <packaging>jar</packaging>
+    <name>orgsphere-auth</name>
+    <description>Auth module: registration, login, OTP, password reset</description>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-user</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-subscription</artifactId>
+        </dependency>
+
+        <!-- security module for JwtService -->
+        <dependency>
+            <groupId>com.orgsphere</groupId>
+            <artifactId>orgsphere-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Spring Mail (for OTP email) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+    </dependencies>
+
+</project>
