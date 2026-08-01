@@ -36,4 +36,6 @@ public class TeacherRequest {
 
     @NotNull(message = "Organization ID is required")
     private Long organizationId;
+
+    private Double monthlySalary;
 }

@@ -44,4 +44,8 @@ public class Teacher extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
+    @Column(name = "monthly_salary")
+    private Double monthlySalary;
+
+// Getter & Setter (Lombok @Getter @Setter already hai, toh bas field add karo)
 }

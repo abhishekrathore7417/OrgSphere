@@ -70,4 +70,10 @@ public class TeacherController {
         List<TeacherResponse> teachers = teacherService.getAllTeachers();
         return ApiResponse.success("All teachers fetched successfully", teachers);
     }
+    @PutMapping("/{id}/salary")
+    public ApiResponse updateSalary(@PathVariable Long id, @RequestParam Double salary) {
+        TeacherResponse response = teacherService.updateSalary(id, salary);
+        return ApiResponse.success("Salary updated successfully", response);
+    }
+
 }

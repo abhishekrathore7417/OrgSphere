@@ -86,6 +86,7 @@ public class TeacherServiceImpl implements TeacherService {
         Teacher teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
 
+
         teacher.setSpecialization(request.getSpecialization());
         teacher.setQualification(request.getQualification());
         teacher.setExperienceYears(request.getExperienceYears());
@@ -135,6 +136,15 @@ public class TeacherServiceImpl implements TeacherService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
+    @Override
+    @Transactional
+    public TeacherResponse updateSalary(Long id, Double salary) {
+        Teacher teacher = teacherRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found"));
+        teacher.setMonthlySalary(salary);
+        Teacher updatedTeacher = teacherRepository.save(teacher);
+        return mapToResponse(updatedTeacher);
+    }
 
     private TeacherResponse mapToResponse(Teacher teacher) {
         return TeacherResponse.builder()
@@ -150,6 +160,7 @@ public class TeacherServiceImpl implements TeacherService {
                 .userEmail(teacher.getUser().getEmail())
                 .organizationId(teacher.getOrganization().getId())
                 .organizationName(teacher.getOrganization().getOrganizationName())
+                .monthlySalary(teacher.getMonthlySalary())
                 .build();
     }
 }

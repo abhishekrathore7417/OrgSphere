@@ -25,4 +25,5 @@ public class TeacherResponse {
     private String userEmail;
     private Long organizationId;
     private String organizationName;
+    private Double monthlySalary;
 }

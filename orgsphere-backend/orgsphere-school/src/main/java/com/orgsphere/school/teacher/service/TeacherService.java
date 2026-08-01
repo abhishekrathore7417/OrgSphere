@@ -24,4 +24,6 @@ public interface TeacherService {
     List<TeacherResponse> getTeachersBySpecialization(Long organizationId, String specialization);
 
     List<TeacherResponse> getAllTeachers();
+
+    TeacherResponse updateSalary(Long id, Double salary);
 }
