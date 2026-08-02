@@ -1,7 +1,11 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { authApi } from '../../api/authApi';
+
+// Step 1: Enter email/mobile
+// Step 2: Enter OTP received on email
+// Step 3: Enter new password
 
 const ForgotPasswordPage = () => {
     const navigate = useNavigate();
@@ -13,6 +17,7 @@ const ForgotPasswordPage = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Step 1 - Send OTP
     const handleSendOtp = async (e) => {
         if (e && e.preventDefault) e.preventDefault();
         if (!emailOrMobile.trim()) {
@@ -33,6 +38,7 @@ const ForgotPasswordPage = () => {
         }
     };
 
+    // Step 2 - Verify OTP
     const handleVerifyOtp = async (e) => {
         e.preventDefault();
         if (!otp.trim()) {
@@ -52,6 +58,7 @@ const ForgotPasswordPage = () => {
         }
     };
 
+    // Step 3 - Reset Password
     const handleResetPassword = async (e) => {
         e.preventDefault();
         if (!newPassword.trim() || !confirmPassword.trim()) {
@@ -79,158 +86,97 @@ const ForgotPasswordPage = () => {
         }
     };
 
-    const stepLabel = { 1: 'Email', 2: 'OTP', 3: 'Password' };
-
     return (
-        <div className="min-h-screen w-full flex bg-[#FDFBF7]">
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap');
-                .os-serif { font-family: 'Fraunces', Georgia, serif; }
-                .os-sans { font-family: 'Inter', system-ui, sans-serif; }
-                .os-orbit-outer { transform-origin: 150px 150px; animation: os-spin 26s linear infinite; }
-                .os-orbit-inner { transform-origin: 150px 150px; animation: os-spin 15s linear infinite reverse; }
-                @keyframes os-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                @media (prefers-reduced-motion: reduce) {
-                    .os-orbit-outer, .os-orbit-inner { animation: none; }
-                }
-            `}</style>
+        <div
+            className="min-h-screen flex items-center justify-center px-4 py-8"
+            style={{
+                background:
+                    'linear-gradient(135deg, #ddd0f5 0%, #cfe0f7 35%, #d9edf8 60%, #fbdbdb 100%)',
+            }}
+        >
+            <div className="w-full max-w-md">
+                <div className="bg-white rounded-[2rem] shadow-2xl p-8 md:p-10 border border-gray-100">
 
-            {/* LEFT — brand / signature panel */}
-            <div className="hidden lg:flex lg:w-[46%] bg-[#0B1120] relative flex-col justify-between px-14 py-12 overflow-hidden">
-                <div className="os-sans text-[#C9A54E] text-sm tracking-[0.25em] uppercase">
-                    OrgSphere
-                </div>
+                    <h2 className="text-3xl font-extrabold text-gray-900 tracking-tight text-center mb-6">
+                        Forgot Password
+                    </h2>
 
-                <div className="relative z-10">
-                    <h1 className="os-serif text-white text-5xl leading-[1.15] max-w-md">
-                        A short detour back to your account.
-                    </h1>
-                    <p className="os-sans text-slate-400 text-sm mt-5 max-w-sm leading-relaxed">
-                        Verify it's you, then choose a new password — three quick steps
-                        and you're back in.
-                    </p>
-                </div>
-
-                <div className="absolute right-[-60px] bottom-[-60px] opacity-90">
-                    <svg width="340" height="340" viewBox="0 0 300 300" fill="none">
-                        <circle cx="150" cy="150" r="120" stroke="#1E293B" strokeWidth="1" />
-                        <circle cx="150" cy="150" r="80" stroke="#1E293B" strokeWidth="1" />
-                        <g className="os-orbit-outer">
-                            <circle cx="270" cy="150" r="6" fill="#C9A54E" />
-                        </g>
-                        <g className="os-orbit-inner">
-                            <circle cx="70" cy="150" r="5" fill="#64748B" />
-                        </g>
-                    </svg>
-                </div>
-
-                <div className="os-sans text-slate-600 text-xs relative z-10">
-                    &copy; {new Date().getFullYear()} OrgSphere
-                </div>
-            </div>
-
-            {/* RIGHT — form panel */}
-            <div className="flex-1 flex items-center justify-center px-6 py-12">
-                <div className="w-full max-w-sm">
-
-                    <h2 className="os-serif text-3xl text-[#0B1120] mb-1">Reset password</h2>
-                    <p className="os-sans text-sm text-gray-500 mb-8">
-                        Step {step} of 3 — {stepLabel[step]}
-                    </p>
-
-                    {/* Step indicator */}
-                    <div className="flex items-center mb-9 os-sans">
-                        {[1, 2, 3].map((s, i) => (
-                            <div key={s} className="flex items-center flex-1 last:flex-none">
-                                <div className="flex flex-col items-center gap-1.5">
-                                    <div
-                                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold transition-colors ${
-                                            step >= s
-                                                ? 'bg-[#0B1120] text-[#C9A54E]'
-                                                : 'bg-gray-100 text-gray-400'
-                                        }`}
-                                    >
-                                        {s}
-                                    </div>
-                                    <span
-                                        className={`text-[11px] tracking-wide ${
-                                            step >= s ? 'text-[#0B1120]' : 'text-gray-400'
-                                        }`}
-                                    >
-                                        {stepLabel[s]}
-                                    </span>
+                    {/* Step Indicator */}
+                    <div className="flex justify-center gap-6 mb-8">
+                        {[1, 2, 3].map((s) => (
+                            <div key={s} className="flex flex-col items-center gap-1.5">
+                                <div
+                                    className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm transition-colors ${
+                                        step >= s
+                                            ? 'bg-violet-600 text-white shadow-md'
+                                            : 'bg-gray-200 text-gray-500'
+                                    }`}
+                                >
+                                    {s}
                                 </div>
-                                {i < 2 && (
-                                    <div
-                                        className={`flex-1 h-px mx-2 -mt-5 transition-colors ${
-                                            step > s ? 'bg-[#C9A54E]' : 'bg-gray-200'
-                                        }`}
-                                    />
-                                )}
+                                <span
+                                    className={`text-xs font-medium ${
+                                        step >= s ? 'text-violet-600' : 'text-gray-400'
+                                    }`}
+                                >
+                                    {s === 1 ? 'Email' : s === 2 ? 'OTP' : 'Password'}
+                                </span>
                             </div>
                         ))}
                     </div>
 
                     {/* Step 1 - Enter Email/Mobile */}
                     {step === 1 && (
-                        <form onSubmit={handleSendOtp} className="os-sans space-y-5">
-                            <p className="text-sm text-gray-500 leading-relaxed">
-                                Enter your registered email or mobile number and we'll send you an OTP.
+                        <form onSubmit={handleSendOtp} className="flex flex-col gap-3">
+                            <p className="text-sm text-gray-500 leading-relaxed mb-1">
+                                Enter your registered email or mobile number to receive an OTP.
                             </p>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                                    Email or mobile
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="you@company.com"
-                                    value={emailOrMobile}
-                                    onChange={(e) => setEmailOrMobile(e.target.value)}
-                                    className="w-full px-0 py-2.5 bg-transparent border-0 border-b border-gray-300 text-[#0B1120] placeholder-gray-400 focus:outline-none focus:border-[#C9A54E] text-sm transition-colors"
-                                    autoFocus
-                                />
-                            </div>
+                            <label className="text-sm font-semibold text-gray-700">Email or Mobile</label>
+                            <input
+                                type="text"
+                                placeholder="Enter email or mobile"
+                                value={emailOrMobile}
+                                onChange={(e) => setEmailOrMobile(e.target.value)}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm transition"
+                                autoFocus
+                            />
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#0B1120] hover:bg-[#161f36] text-white font-medium py-3 rounded-md transition duration-200 text-sm"
+                                className="mt-2 w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-md hover:shadow-lg text-sm"
                             >
                                 {loading ? 'Sending OTP...' : 'Send OTP'}
                             </button>
                             <button
                                 type="button"
                                 onClick={() => navigate('/login')}
-                                className="w-full text-center text-xs font-medium text-gray-500 hover:text-[#0B1120] transition"
+                                className="text-center text-sm font-semibold text-violet-600 hover:text-violet-800 transition py-1"
                             >
-                                Back to login
+                                Back to Login
                             </button>
                         </form>
                     )}
 
                     {/* Step 2 - Enter OTP */}
                     {step === 2 && (
-                        <form onSubmit={handleVerifyOtp} className="os-sans space-y-5">
-                            <p className="text-sm text-gray-500 leading-relaxed">
-                                OTP sent to your registered email. Check your inbox and spam folder.
+                        <form onSubmit={handleVerifyOtp} className="flex flex-col gap-3">
+                            <p className="text-sm text-gray-500 leading-relaxed mb-1">
+                                OTP has been sent to your registered email address. Please check your inbox and spam folder.
                             </p>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                                    Enter OTP
-                                </label>
-                                <input
-                                    type="text"
-                                    placeholder="6-digit code"
-                                    value={otp}
-                                    onChange={(e) => setOtp(e.target.value)}
-                                    maxLength={6}
-                                    className="w-full px-0 py-2.5 bg-transparent border-0 border-b border-gray-300 text-[#0B1120] placeholder-gray-400 focus:outline-none focus:border-[#C9A54E] text-sm tracking-[0.3em] transition-colors"
-                                    autoFocus
-                                />
-                            </div>
+                            <label className="text-sm font-semibold text-gray-700">Enter OTP</label>
+                            <input
+                                type="text"
+                                placeholder="Enter 6-digit OTP"
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                                maxLength={6}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm transition"
+                                autoFocus
+                            />
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#0B1120] hover:bg-[#161f36] text-white font-medium py-3 rounded-md transition duration-200 text-sm"
+                                className="mt-2 w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-md hover:shadow-lg text-sm"
                             >
                                 {loading ? 'Verifying...' : 'Verify OTP'}
                             </button>
@@ -238,7 +184,7 @@ const ForgotPasswordPage = () => {
                                 type="button"
                                 onClick={handleSendOtp}
                                 disabled={loading}
-                                className="w-full text-center text-xs font-medium text-gray-500 hover:text-[#0B1120] transition"
+                                className="text-center text-sm font-semibold text-violet-600 hover:text-violet-800 transition py-1"
                             >
                                 Resend OTP
                             </button>
@@ -247,41 +193,33 @@ const ForgotPasswordPage = () => {
 
                     {/* Step 3 - New Password */}
                     {step === 3 && (
-                        <form onSubmit={handleResetPassword} className="os-sans space-y-5">
-                            <p className="text-sm text-gray-500 leading-relaxed">
-                                Choose a new password for your account.
+                        <form onSubmit={handleResetPassword} className="flex flex-col gap-3">
+                            <p className="text-sm text-gray-500 leading-relaxed mb-1">
+                                Set your new password.
                             </p>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                                    New password
-                                </label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={newPassword}
-                                    onChange={(e) => setNewPassword(e.target.value)}
-                                    className="w-full px-0 py-2.5 bg-transparent border-0 border-b border-gray-300 text-[#0B1120] placeholder-gray-400 focus:outline-none focus:border-[#C9A54E] text-sm transition-colors"
-                                    autoFocus
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                                    Confirm password
-                                </label>
-                                <input
-                                    type="password"
-                                    placeholder="••••••••"
-                                    value={confirmPassword}
-                                    onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="w-full px-0 py-2.5 bg-transparent border-0 border-b border-gray-300 text-[#0B1120] placeholder-gray-400 focus:outline-none focus:border-[#C9A54E] text-sm transition-colors"
-                                />
-                            </div>
+                            <label className="text-sm font-semibold text-gray-700">New Password</label>
+                            <input
+                                type="password"
+                                placeholder="Enter new password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm transition"
+                                autoFocus
+                            />
+                            <label className="text-sm font-semibold text-gray-700">Confirm Password</label>
+                            <input
+                                type="password"
+                                placeholder="Confirm new password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent text-sm transition"
+                            />
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full bg-[#0B1120] hover:bg-[#161f36] text-white font-medium py-3 rounded-md transition duration-200 text-sm"
+                                className="mt-2 w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-3 rounded-xl transition duration-200 shadow-md hover:shadow-lg text-sm"
                             >
-                                {loading ? 'Resetting...' : 'Reset password'}
+                                {loading ? 'Resetting...' : 'Reset Password'}
                             </button>
                         </form>
                     )}
