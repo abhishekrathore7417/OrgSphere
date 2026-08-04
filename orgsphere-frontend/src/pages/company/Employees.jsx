@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import { userApi } from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
 
 const buildNav = (deptName) => [
@@ -81,6 +82,7 @@ const Employees = () => {
             department: emp.department || decoded,
             joiningDate: emp.joiningDate || '',
             salary: emp.salary || '',
+            userId: emp.userId || '',
         });
         setModal(true);
     };
@@ -97,6 +99,7 @@ const Employees = () => {
                     joiningDate:    form.joiningDate,
                     salary:         form.salary ? parseFloat(form.salary) : null,
                     status:         'ACTIVE',
+                    userId:         parseInt(form.userId),
                     organizationId: parseInt(orgId),
                 });
                 toast.success('Employee updated successfully');
@@ -109,7 +112,7 @@ const Employees = () => {
                     organizationId: parseInt(orgId),
                 });
                 const uid = uRes.data.data?.id;
-                await companyApi.createEmployee({
+                const empRes = await companyApi.createEmployee({
                     employeeId:     form.employeeId,
                     designation:    form.designation,
                     department:     form.department,
@@ -119,6 +122,14 @@ const Employees = () => {
                     userId:         uid,
                     organizationId: parseInt(orgId),
                 });
+                // Store employee-department mapping in localStorage (for attendance/leaves filtering)
+                if (uid) {
+                    const deptKey = `dept_employees_${orgId}_${decoded}`;
+                    const existing = JSON.parse(localStorage.getItem(deptKey) || '[]');
+                    if (!existing.includes(uid)) {
+                        localStorage.setItem(deptKey, JSON.stringify([...existing, uid]));
+                    }
+                }
                 toast.success('Employee added successfully');
             }
             setModal(false);
@@ -129,7 +140,7 @@ const Employees = () => {
     };
 
     return (
-        <DashboardLayout navItems={buildNav(deptName)} orgLabel="Company Portal">
+        <CompanyLayout>
             <div className="p-6 max-w-7xl mx-auto">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
@@ -213,7 +224,7 @@ const Employees = () => {
                     </div>
                 </form>
             </Modal>
-        </DashboardLayout>
+        </CompanyLayout>
     );
 };
 

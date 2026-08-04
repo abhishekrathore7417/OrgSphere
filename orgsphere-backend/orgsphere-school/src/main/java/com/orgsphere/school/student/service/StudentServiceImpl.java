@@ -30,15 +30,16 @@ public class StudentServiceImpl implements StudentService {
     @Override
     public StudentResponse createStudent(StudentRequest request) {
 
-        if (studentRepository.existsByStudentId(request.getStudentId())) {
-            throw new BadRequestException("Student ID already exists: " + request.getStudentId());
-        }
-
         User user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Organization organization = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        // Check uniqueness within same organization only (not globally)
+        if (studentRepository.existsByStudentIdAndOrganization(request.getStudentId(), organization)) {
+            throw new BadRequestException("Student ID already exists in this organization: " + request.getStudentId());
+        }
 
         Student student = Student.builder()
                 .studentId(request.getStudentId())

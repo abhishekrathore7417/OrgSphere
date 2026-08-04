@@ -27,16 +27,17 @@ public class ClassroomServiceImpl implements ClassroomService {
     @Override
     public ClassroomResponse createClassroom(ClassroomRequest request) {
 
-        if (classroomRepository.existsByClassCode(request.getClassCode())) {
-            throw new BadRequestException("Class code already exists: " + request.getClassCode());
-        }
-
-        if (classroomRepository.existsByClassroomName(request.getClassroomName())) {
-            throw new BadRequestException("Classroom name already exists: " + request.getClassroomName());
-        }
-
         Organization organization = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
+
+        // org-level unique check — same code/name allowed in different organizations
+        if (classroomRepository.existsByClassCodeAndOrganization(request.getClassCode(), organization)) {
+            throw new BadRequestException("Class code already exists in this organization: " + request.getClassCode());
+        }
+
+        if (classroomRepository.existsByClassroomNameAndOrganization(request.getClassroomName(), organization)) {
+            throw new BadRequestException("Classroom name already exists in this organization: " + request.getClassroomName());
+        }
 
         Classroom classroom = Classroom.builder()
                 .classroomName(request.getClassroomName())

@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import { userApi } from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
 
 const buildNav = (deptName) => [
@@ -52,15 +53,31 @@ const Attendance = () => {
         setLoading(true);
         try {
             const res = await companyApi.getAttendanceByOrganization(orgId);
-            setAttendances(res.data.data || []);
+            const all = res.data.data || [];
+            // Filter attendance to only this department's employees using localStorage mapping
+            const deptKey = `dept_employees_${orgId}_${decoded}`;
+            const storedIds = JSON.parse(localStorage.getItem(deptKey) || '[]');
+            if (storedIds.length > 0) {
+                setAttendances(all.filter(a => storedIds.includes(a.userId)));
+            } else {
+                // New department with no employees yet — show empty, not all org data
+                setAttendances([]);
+            }
         } catch { toast.error('Failed to fetch attendance'); }
         finally { setLoading(false); }
     };
 
     const loadUsers = async () => {
         try {
+            const deptKey = `dept_employees_${orgId}_${decoded}`;
+            const storedIds = JSON.parse(localStorage.getItem(deptKey) || '[]');
             const res = await userApi.getUsersByOrganization(orgId);
-            setUsers(res.data.data || []);
+            const allUsers = res.data.data || [];
+            // Show only this dept's employees — empty dept shows empty dropdown
+            const filtered = storedIds.length > 0
+                ? allUsers.filter(u => u.role === 'EMPLOYEE' && storedIds.includes(u.id))
+                : [];
+            setUsers(filtered);
         } catch { /* silent */ }
     };
 
@@ -105,7 +122,7 @@ const Attendance = () => {
     };
 
     return (
-        <DashboardLayout navItems={buildNav(deptName)} orgLabel="Company Portal">
+        <CompanyLayout>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/company/departments')} className="hover:text-violet-600">Departments</button>
@@ -190,7 +207,7 @@ const Attendance = () => {
                     </div>
                 </form>
             </Modal>
-        </DashboardLayout>
+        </CompanyLayout>
     );
 };
 

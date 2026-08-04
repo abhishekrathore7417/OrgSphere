@@ -67,8 +67,12 @@ const Fees = () => {
                     ? schoolApi.getStudentsByClass(orgId, c.classroomName)
                     : schoolApi.getStudentsByOrganization(orgId),
             ]);
-            setFees(feesRes.data.data || []);
-            setStudents((studRes.data.data || []).map(s => ({ id: s.userId, name: s.userFullName })));
+            const classStudents = studRes.data.data || [];
+            // Filter fees — only show fees for students in THIS classroom
+            const classroomStudentUserIds = new Set(classStudents.map(s => s.userId));
+            const allFees = feesRes.data.data || [];
+            setFees(allFees.filter(fee => classroomStudentUserIds.has(fee.studentId)));
+            setStudents(classStudents.map(s => ({ id: s.userId, name: s.userFullName })));
         } catch { toast.error('Failed to fetch fee data'); }
         finally { setLoading(false); }
     };
@@ -141,38 +145,7 @@ const Fees = () => {
 
     const label = classroom?.classroomName || `Classroom #${classroomId}`;
 
-    const FeeForm = ({ onSubmit, submitLabel }) => (
-        <form onSubmit={onSubmit} className="space-y-4">
-            <F label="Student *">
-                <Select required value={form.studentId} onChange={e => setForm({...form, studentId: e.target.value})}>
-                    <option value="">-- Select Student --</option>
-                    {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </Select>
-            </F>
-            <F label="Fee Type *">
-                <Select value={form.feeType} onChange={e => setForm({...form, feeType: e.target.value})}>
-                    <option value="TUITION">Tuition Fee</option>
-                    <option value="EXAM">Exam Fee</option>
-                    <option value="LIBRARY">Library Fee</option>
-                    <option value="SPORTS">Sports Fee</option>
-                    <option value="TRANSPORT">Transport Fee</option>
-                    <option value="HOSTEL">Hostel Fee</option>
-                    <option value="OTHER">Other</option>
-                </Select>
-            </F>
-            <div className="grid grid-cols-2 gap-3">
-                <F label="Amount (₹) *"><Input required type="number" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} placeholder="0.00" /></F>
-                <F label="Due Date *"><Input required type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} /></F>
-            </div>
-            <F label="Description"><Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Optional description" /></F>
-            <div className="flex gap-3 pt-2">
-                <button type="button" onClick={() => { setAddModal(false); setEditModal(false); }} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50">Cancel</button>
-                <button type="submit" disabled={saving} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2.5 rounded-lg disabled:opacity-60">
-                    {saving ? 'Saving...' : submitLabel}
-                </button>
-            </div>
-        </form>
-    );
+    // ── FeeForm JSX inline (no inner component — avoids re-mount & focus loss) ──
 
     return (
         <SchoolLayout>
@@ -239,12 +212,66 @@ const Fees = () => {
 
             {/* Add Fee Modal */}
             <Modal open={addModal} onClose={() => setAddModal(false)} title="Add Fee Record">
-                <FeeForm onSubmit={handleAddSubmit} submitLabel="Add Fee" />
+                <form onSubmit={handleAddSubmit} className="space-y-4">
+                    <F label="Student *">
+                        <Select required value={form.studentId} onChange={e => setForm({...form, studentId: e.target.value})}>
+                            <option value="">-- Select Student --</option>
+                            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </Select>
+                    </F>
+                    <F label="Fee Type *">
+                        <Select value={form.feeType} onChange={e => setForm({...form, feeType: e.target.value})}>
+                            <option value="TUITION">Tuition Fee</option>
+                            <option value="EXAM">Exam Fee</option>
+                            <option value="LIBRARY">Library Fee</option>
+                            <option value="SPORTS">Sports Fee</option>
+                            <option value="TRANSPORT">Transport Fee</option>
+                            <option value="HOSTEL">Hostel Fee</option>
+                            <option value="OTHER">Other</option>
+                        </Select>
+                    </F>
+                    <div className="grid grid-cols-2 gap-3">
+                        <F label="Amount (₹) *"><Input required type="number" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} placeholder="0.00" /></F>
+                        <F label="Due Date *"><Input required type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} /></F>
+                    </div>
+                    <F label="Description"><Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Optional description" /></F>
+                    <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setAddModal(false)} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button type="submit" disabled={saving} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2.5 rounded-lg disabled:opacity-60">{saving ? 'Saving...' : 'Add Fee'}</button>
+                    </div>
+                </form>
             </Modal>
 
             {/* Edit Fee Modal */}
             <Modal open={editModal} onClose={() => setEditModal(false)} title="Edit Fee Record">
-                <FeeForm onSubmit={handleEditSubmit} submitLabel="Update Fee" />
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                    <F label="Student *">
+                        <Select required value={form.studentId} onChange={e => setForm({...form, studentId: e.target.value})}>
+                            <option value="">-- Select Student --</option>
+                            {students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                        </Select>
+                    </F>
+                    <F label="Fee Type *">
+                        <Select value={form.feeType} onChange={e => setForm({...form, feeType: e.target.value})}>
+                            <option value="TUITION">Tuition Fee</option>
+                            <option value="EXAM">Exam Fee</option>
+                            <option value="LIBRARY">Library Fee</option>
+                            <option value="SPORTS">Sports Fee</option>
+                            <option value="TRANSPORT">Transport Fee</option>
+                            <option value="HOSTEL">Hostel Fee</option>
+                            <option value="OTHER">Other</option>
+                        </Select>
+                    </F>
+                    <div className="grid grid-cols-2 gap-3">
+                        <F label="Amount (₹) *"><Input required type="number" step="0.01" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} placeholder="0.00" /></F>
+                        <F label="Due Date *"><Input required type="date" value={form.dueDate} onChange={e => setForm({...form, dueDate: e.target.value})} /></F>
+                    </div>
+                    <F label="Description"><Input value={form.description} onChange={e => setForm({...form, description: e.target.value})} placeholder="Optional description" /></F>
+                    <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setEditModal(false)} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50">Cancel</button>
+                        <button type="submit" disabled={saving} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2.5 rounded-lg disabled:opacity-60">{saving ? 'Saving...' : 'Update Fee'}</button>
+                    </div>
+                </form>
             </Modal>
 
             {/* Pay Fee Modal */}

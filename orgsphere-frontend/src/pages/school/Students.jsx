@@ -70,6 +70,7 @@ const Students = () => {
             className: s.className || '', section: s.section || '',
             rollNumber: s.rollNumber || '', guardianName: s.guardianName || '',
             guardianContact: s.guardianContact || '',
+            userId: s.userId || '',
         });
         setModal(true);
     };
@@ -84,7 +85,9 @@ const Students = () => {
                     className: form.className, section: form.section,
                     rollNumber: form.rollNumber ? parseInt(form.rollNumber) : null,
                     guardianName: form.guardianName, guardianContact: form.guardianContact,
-                    status: 'ACTIVE', organizationId: parseInt(orgId),
+                    status: 'ACTIVE',
+                    userId: parseInt(form.userId),
+                    organizationId: parseInt(orgId),
                 });
                 toast.success('Student updated successfully');
             } else {

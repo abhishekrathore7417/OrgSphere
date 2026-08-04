@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
 
 const buildNav = (deptName) => [
@@ -27,7 +28,7 @@ const STATUS_STYLE = {
     REJECTED: 'bg-red-50 text-red-600 border-red-100',
 };
 
-const EMPTY_FORM = { leaveType: 'SICK', startDate: '', endDate: '', reason: '' };
+const EMPTY_FORM = { selectedUserId: '', leaveType: 'SICK', startDate: '', endDate: '', reason: '' };
 
 const LeaveRequests = () => {
     const { deptName } = useParams();
@@ -40,23 +41,46 @@ const LeaveRequests = () => {
     const orgId    = rawOrgId || (lsOrgId && lsOrgId !== 'null' && lsOrgId !== 'undefined' ? parseInt(lsOrgId, 10) : null);
     const userId   = user?.id || JSON.parse(localStorage.getItem('user') || '{}')?.id;
 
-    const [leaves, setLeaves]   = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving]   = useState(false);
-    const [modal, setModal]     = useState(false);
+    const [leaves, setLeaves]       = useState([]);
+    const [employees, setEmployees] = useState([]);
+    const [loading, setLoading]     = useState(true);
+    const [saving, setSaving]       = useState(false);
+    const [modal, setModal]         = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [form, setForm]       = useState(EMPTY_FORM);
+    const [form, setForm]           = useState(EMPTY_FORM);
 
-    useEffect(() => { load(); }, [deptName]);
+    useEffect(() => { load(); loadEmployees(); }, [deptName]);
 
     const load = async () => {
         setLoading(true);
         try {
             const res = await companyApi.getLeavesByOrganization(orgId);
-            // Filter by department employees on frontend — backend has no dept filter for leaves
-            setLeaves(res.data.data || []);
+            const all = res.data.data || [];
+            // Filter to only this department's employees
+            const deptKey = `dept_employees_${orgId}_${decoded}`;
+            const storedIds = JSON.parse(localStorage.getItem(deptKey) || '[]');
+            if (storedIds.length > 0) {
+                setLeaves(all.filter(l => storedIds.includes(l.userId)));
+            } else {
+                // New department with no employees yet — show empty
+                setLeaves([]);
+            }
         } catch { toast.error('Failed to fetch leave requests'); }
         finally { setLoading(false); }
+    };
+
+    const loadEmployees = async () => {
+        try {
+            const res = await companyApi.getEmployeesByOrganization(orgId);
+            const allEmps = res.data.data || [];
+            const deptKey = `dept_employees_${orgId}_${decoded}`;
+            const storedIds = JSON.parse(localStorage.getItem(deptKey) || '[]');
+            // Only this dept's employees — empty dept shows empty list
+            const filtered = storedIds.length > 0
+                ? allEmps.filter(e => storedIds.includes(e.userId))
+                : [];
+            setEmployees(filtered);
+        } catch { /* silent */ }
     };
 
     const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
@@ -66,6 +90,7 @@ const LeaveRequests = () => {
     const openEdit = (leave) => {
         setEditingId(leave.id);
         setForm({
+            selectedUserId: leave.userId || '',
             leaveType: leave.leaveType,
             startDate: leave.startDate,
             endDate:   leave.endDate,
@@ -77,18 +102,28 @@ const LeaveRequests = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
+        // For new leave use selected employee's userId; for edit use existing leave's userId
+        const targetUserId = editingId
+            ? parseInt(form.selectedUserId || userId)
+            : parseInt(form.selectedUserId);
         try {
             if (editingId) {
                 await companyApi.updateLeave(editingId, {
-                    ...form,
-                    userId:         parseInt(userId),
+                    leaveType: form.leaveType,
+                    startDate: form.startDate,
+                    endDate:   form.endDate,
+                    reason:    form.reason,
+                    userId:         targetUserId,
                     organizationId: parseInt(orgId),
                 });
                 toast.success('Leave updated successfully');
             } else {
                 await companyApi.applyLeave({
-                    ...form,
-                    userId:         parseInt(userId),
+                    leaveType: form.leaveType,
+                    startDate: form.startDate,
+                    endDate:   form.endDate,
+                    reason:    form.reason,
+                    userId:         targetUserId,
                     organizationId: parseInt(orgId),
                 });
                 toast.success('Leave applied successfully');
@@ -110,7 +145,7 @@ const LeaveRequests = () => {
     };
 
     return (
-        <DashboardLayout navItems={buildNav(deptName)} orgLabel="Company Portal">
+        <CompanyLayout>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/company/departments')} className="hover:text-violet-600">Departments</button>
@@ -176,6 +211,14 @@ const LeaveRequests = () => {
 
             <Modal open={modal} onClose={() => setModal(false)} title={editingId ? 'Edit Leave' : 'Apply Leave'}>
                 <form onSubmit={handleSubmit} className="space-y-3">
+                    <F label="Select Employee *">
+                        <Select required value={form.selectedUserId} onChange={e => set('selectedUserId', e.target.value)}>
+                            <option value="">-- Select Employee --</option>
+                            {employees.map(emp => (
+                                <option key={emp.id} value={emp.userId}>{emp.userFullName} ({emp.employeeId})</option>
+                            ))}
+                        </Select>
+                    </F>
                     <F label="Leave Type *">
                         <Select value={form.leaveType} onChange={e => set('leaveType', e.target.value)}>
                             <option value="SICK">Sick Leave</option>
@@ -199,7 +242,7 @@ const LeaveRequests = () => {
                     </div>
                 </form>
             </Modal>
-        </DashboardLayout>
+        </CompanyLayout>
     );
 };
 

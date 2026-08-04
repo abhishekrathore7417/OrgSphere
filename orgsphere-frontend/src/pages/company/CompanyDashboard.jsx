@@ -1,6 +1,7 @@
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../../components/layout/DashboardLayout';
+import CompanyLayout from '../../components/layout/CompanyLayout';
 
 export const COMPANY_NAV = [
     { path: '/company/dashboard',   label: 'Dashboard',   icon: <HomeIcon /> },
@@ -100,7 +101,7 @@ const CompanyDashboard = () => {
     ];
 
     return (
-        <DashboardLayout navItems={COMPANY_NAV} orgLabel="Company Portal">
+        <CompanyLayout>
             <div className="p-6 space-y-6 max-w-7xl mx-auto">
 
                 {/* ── Welcome Banner ── */}
@@ -182,7 +183,7 @@ const CompanyDashboard = () => {
                 </div>
 
             </div>
-        </DashboardLayout>
+        </CompanyLayout>
     );
 };
 

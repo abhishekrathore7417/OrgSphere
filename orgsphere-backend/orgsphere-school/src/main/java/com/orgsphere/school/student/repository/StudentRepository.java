@@ -26,4 +26,7 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     List<Student> findByOrganizationAndClassNameAndSection(Organization organization, String className, String section);
 
     boolean existsByStudentId(String studentId);
+
+    // org-level unique — same studentId allowed in different organizations
+    boolean existsByStudentIdAndOrganization(String studentId, Organization organization);
 }

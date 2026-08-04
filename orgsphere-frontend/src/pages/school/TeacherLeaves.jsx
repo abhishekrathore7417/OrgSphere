@@ -55,7 +55,7 @@ const TeacherLeaves = () => {
             const allTeachers = teachersRes.data.data || [];
             const deptTeachers = storedIds.length > 0
                 ? allTeachers.filter(t => storedIds.includes(t.id))
-                : allTeachers;
+                : []; // empty for new departments
             const deptTeacherUserIds = new Set(deptTeachers.map(t => t.userId));
             setTeachers(deptTeachers.map(t => ({ id: t.userId, name: t.userFullName })));
 

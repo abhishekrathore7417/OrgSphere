@@ -25,4 +25,9 @@ public interface ClassroomRepository extends JpaRepository<Classroom, Long> {
     boolean existsByClassCode(String classCode);
 
     boolean existsByClassroomName(String classroomName);
+
+    // org-level checks — used to allow same name/code in different orgs
+    boolean existsByClassCodeAndOrganization(String classCode, Organization organization);
+
+    boolean existsByClassroomNameAndOrganization(String classroomName, Organization organization);
 }

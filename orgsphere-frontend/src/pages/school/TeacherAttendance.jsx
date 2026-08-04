@@ -125,7 +125,7 @@ const TeacherAttendance = () => {
             // Filter teachers by dept mapping
             const deptTeachers = storedIds.length > 0
                 ? allTeachers.filter(t => storedIds.includes(t.id))
-                : allTeachers; // fallback show all if no mapping
+                : []; // empty for new departments
             const deptTeacherUserIds = new Set(deptTeachers.map(t => t.userId));
             setTeachers(deptTeachers.map(t => ({id: t.userId, fullName: t.userFullName, email: t.userEmail})));
             // Filter attendance to only this department's teachers

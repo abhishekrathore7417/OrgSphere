@@ -21,24 +21,33 @@ const CLASSROOM_TABS = (id) => [
     { label: 'Leaves',     path: `/school/classrooms/${id}/leaves`     },
 ];
 
-const DEPARTMENT_TABS = (name) => [
+const SCHOOL_DEPT_TABS = (name) => [
     { label: 'Teachers',   path: `/school/departments/${name}/teachers`   },
     { label: 'Attendance', path: `/school/departments/${name}/attendance` },
     { label: 'Leaves',     path: `/school/departments/${name}/leaves`     },
     { label: 'Salary',     path: `/school/departments/${name}/salary`     },
 ];
 
-const parseSchoolRoute = (pathname) => {
-    const crMatch   = pathname.match(/^\/school\/classrooms\/([^/]+)/);
-    const deptMatch = pathname.match(/^\/school\/departments\/([^/]+)/);
+const COMPANY_DEPT_TABS = (name) => [
+    { label: 'Employees',  path: `/company/departments/${name}/employees`  },
+    { label: 'Leaves',     path: `/company/departments/${name}/leaves`     },
+    { label: 'Attendance', path: `/company/departments/${name}/attendance` },
+    { label: 'Salary',     path: `/company/departments/${name}/salary`     },
+];
+
+const parseActiveRoute = (pathname) => {
+    const crMatch       = pathname.match(/^\/school\/classrooms\/([^/]+)/);
+    const schoolDept    = pathname.match(/^\/school\/departments\/([^/]+)/);
+    const companyDept   = pathname.match(/^\/company\/departments\/([^/]+)/);
     return {
-        activeClassroomId: crMatch   ? crMatch[1]   : null,
-        activeDeptName:    deptMatch ? deptMatch[1] : null,
+        activeClassroomId:  crMatch     ? crMatch[1]     : null,
+        activeSchoolDept:   schoolDept  ? schoolDept[1]  : null,
+        activeCompanyDept:  companyDept ? companyDept[1] : null,
     };
 };
 
 // ── Expandable sidebar group ──────────────────────────────────
-const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, activeDeptName, navigate }) => {
+const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, activeSchoolDept, activeCompanyDept, navigate }) => {
     const location = useLocation();
     const isInsideGroup = location.pathname.startsWith(item.basePath || item.path);
 
@@ -108,13 +117,16 @@ const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, active
                         children.map(child => {
                             const isClassroomActive = item.groupKey === 'classrooms' &&
                                 activeClassroomId && child.path.includes(`/classrooms/${activeClassroomId}/`);
-                            const isDeptActive = item.groupKey === 'departments' &&
-                                activeDeptName && child.path.includes(`/departments/${activeDeptName}/`);
-                            const isChildActive = isClassroomActive || isDeptActive;
+                            const isSchoolDeptActive = item.groupKey === 'departments' && item.basePath?.startsWith('/school') &&
+                                activeSchoolDept && child.path.includes(`/school/departments/${activeSchoolDept}/`);
+                            const isCompanyDeptActive = item.groupKey === 'departments' && item.basePath?.startsWith('/company') &&
+                                activeCompanyDept && child.path.includes(`/company/departments/${activeCompanyDept}/`);
+                            const isChildActive = isClassroomActive || isSchoolDeptActive || isCompanyDeptActive;
 
                             let subTabs = [];
-                            if (isClassroomActive) subTabs = CLASSROOM_TABS(activeClassroomId);
-                            if (isDeptActive)      subTabs = DEPARTMENT_TABS(activeDeptName);
+                            if (isClassroomActive)  subTabs = CLASSROOM_TABS(activeClassroomId);
+                            if (isSchoolDeptActive)  subTabs = SCHOOL_DEPT_TABS(activeSchoolDept);
+                            if (isCompanyDeptActive) subTabs = COMPANY_DEPT_TABS(activeCompanyDept);
 
                             return (
                                 <div key={child.path}>
@@ -176,7 +188,7 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
 
     const handleLogout = () => { dispatch(logout()); navigate('/'); };
 
-    const { activeClassroomId, activeDeptName } = parseSchoolRoute(location.pathname);
+    const { activeClassroomId, activeSchoolDept, activeCompanyDept } = parseActiveRoute(location.pathname);
 
     const allFlat  = navItems || [];
     const current  = allFlat.find(i => location.pathname === i.path);
@@ -239,7 +251,8 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
                                     sidebarOpen={sidebarOpen}
                                     fetchChildren={fetchChildren}
                                     activeClassroomId={activeClassroomId}
-                                    activeDeptName={activeDeptName}
+                                    activeSchoolDept={activeSchoolDept}
+                                    activeCompanyDept={activeCompanyDept}
                                     navigate={navigate}
                                 />
                             );
