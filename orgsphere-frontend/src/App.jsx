@@ -15,6 +15,9 @@ import Employees from './pages/company/Employees';
 import LeaveRequests from './pages/company/LeaveRequests';
 import Attendance from './pages/company/Attendance';
 import EmployeeSalary from './pages/company/EmployeeSalary';
+import CompanyAllEmployees from './pages/company/CompanyAllEmployees';
+import CompanyAllLeaves from './pages/company/CompanyAllLeaves';
+import CompanyAllAttendance from './pages/company/CompanyAllAttendance';
 
 // School pages
 import SchoolDashboard from './pages/school/SchoolDashboard';
@@ -30,6 +33,9 @@ import Teachers from './pages/school/Teachers';
 import TeacherAttendance from './pages/school/TeacherAttendance';
 import TeacherLeaves from './pages/school/TeacherLeaves';
 import TeacherSalary from './pages/school/TeacherSalary';
+import SchoolAllStudents from './pages/school/SchoolAllStudents';
+import SchoolAllTeachers from './pages/school/SchoolAllTeachers';
+import SchoolAllFees from './pages/school/SchoolAllFees';
 
 function App() {
     return (
@@ -51,15 +57,24 @@ function App() {
                     <Route path="/company/departments/:deptName/leaves" element={<LeaveRequests />} />
                     <Route path="/company/departments/:deptName/attendance" element={<Attendance />} />
                     <Route path="/company/departments/:deptName/salary" element={<EmployeeSalary />} />
+                    {/* Overview pages — accessible from dashboard cards */}
+                    <Route path="/company/all-employees"  element={<CompanyAllEmployees />} />
+                    <Route path="/company/all-leaves"     element={<CompanyAllLeaves />} />
+                    <Route path="/company/all-attendance" element={<CompanyAllAttendance />} />
                     {/* legacy redirects */}
-                    <Route path="/company/employees" element={<Navigate to="/company/departments" replace />} />
-                    <Route path="/company/leaves"    element={<Navigate to="/company/departments" replace />} />
+                    <Route path="/company/employees"  element={<Navigate to="/company/departments" replace />} />
+                    <Route path="/company/leaves"     element={<Navigate to="/company/departments" replace />} />
                     <Route path="/company/attendance" element={<Navigate to="/company/departments" replace />} />
                 </Route>
 
                 {/* ── School ── */}
                 <Route element={<ProtectedRoute allowedRoles={['ORG_ADMIN', 'TEACHER']} />}>
                     <Route path="/school/dashboard" element={<SchoolDashboard />} />
+
+                    {/* Overview pages — accessible from dashboard cards */}
+                    <Route path="/school/all-students" element={<SchoolAllStudents />} />
+                    <Route path="/school/all-teachers" element={<SchoolAllTeachers />} />
+                    <Route path="/school/all-fees"     element={<SchoolAllFees />} />
 
                     {/* Classrooms → student context */}
                     <Route path="/school/classrooms" element={<Classrooms />} />

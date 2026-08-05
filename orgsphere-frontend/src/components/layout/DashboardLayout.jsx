@@ -51,7 +51,7 @@ const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, active
     const location = useLocation();
     const isInsideGroup = location.pathname.startsWith(item.basePath || item.path);
 
-    const [open, setOpen]         = useState(isInsideGroup);
+    const [open, setOpen]         = useState(isInsideGroup || !!item.defaultOpen);
     const [children, setChildren] = useState([]);
     const [loaded, setLoaded]     = useState(false);
     const [loading, setLoading]   = useState(false);

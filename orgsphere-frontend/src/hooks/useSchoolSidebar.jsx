@@ -44,10 +44,13 @@ export const useSchoolSidebar = () => {
             if (groupKey === 'departments') {
                 const res = await companyApi.getDepartmentsByOrganization(orgId);
                 const items = res.data.data || [];
-                return items.map(d => ({
-                    path:  `/school/departments/${encodeURIComponent(d.departmentName)}/teachers`,
-                    label: d.departmentName,
-                }));
+                return items.map(d => {
+                    const name = d.name || d.departmentName || '';
+                    return {
+                        path:  `/school/departments/${encodeURIComponent(name)}/teachers`,
+                        label: name,
+                    };
+                });
             }
         } catch { /* silent */ }
         return [];

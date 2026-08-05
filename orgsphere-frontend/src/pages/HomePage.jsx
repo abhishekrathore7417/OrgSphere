@@ -1,797 +1,600 @@
-import React, {useState, useEffect} from 'react';
-import {Link, useNavigate} from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 
-/* ---------------------------------- Icons --------------------------------- */
-const Icon = ({path, className, strokeWidth = 2}) => (
-    <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth={strokeWidth}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        className={className}
-    >
-        <path d={path}/>
+/* ── SVG Icon helper ─────────────────────────────────────── */
+const Ic = ({ d, cls, sw = 2 }) => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={sw}
+         strokeLinecap="round" strokeLinejoin="round" className={cls}>
+        <path d={d} />
     </svg>
 );
 
-// ----- Stat Icons -----
-const BuildingIcon = ({className}) => (
-    <Icon
-        path="M3 8v14h18V8M3 8l9-5 9 5M6 12h12M6 16h12M6 20h12"
-        className={className}
-    />
-);
-const UsersIcon = ({className}) => (
-    <Icon
-        path="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M12 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
-        className={className}
-    />
-);
-const StarIcon = ({className}) => (
-    <Icon
-        path="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-        className={className}
-    />
-);
-const ShieldIcon = ({className}) => (
-    <Icon
-        path="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z M9 12l2 2 4-4"
-        className={className}
-    />
+/* ── Icon shortcuts ──────────────────────────────────────── */
+const IcArrow    = cls => <Ic cls={cls} sw={2.5} d="M5 12h14M13 6l6 6-6 6" />;
+const IcChevron  = cls => <Ic cls={cls} d="m6 9 6 6 6-6" />;
+const IcMenu     = cls => <Ic cls={cls} d="M4 6h16M4 12h16M4 18h16" />;
+const IcClose    = cls => <Ic cls={cls} d="M18 6L6 18M6 6l12 12" />;
+const IcCheck    = cls => <Ic cls={cls} sw={2.5} d="M20 6L9 17l-5-5" />;
+const IcMail     = cls => <Ic cls={cls} d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6" />;
+const IcPhone    = cls => <Ic cls={cls} d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07A19.5 19.5 0 013.27 9.76 19.79 19.79 0 01.21 1.2 2 2 0 012.22 0h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L6.91 7.09a16 16 0 006 6l.56-.56a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 14.92z" />;
+const IcBuilding = cls => <Ic cls={cls} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />;
+const IcUsers    = cls => <Ic cls={cls} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />;
+const IcShield   = cls => <Ic cls={cls} d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z M9 12l2 2 4-4" />;
+const IcTrend    = cls => <Ic cls={cls} d="M23 6l-7.5 7.5-5-5L3 16 M23 10v-4h-4" />;
+const IcClock    = cls => <Ic cls={cls} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />;
+const IcCalendar = cls => <Ic cls={cls} d="M8 2v4M16 2v4M3 10h18M21 14V6a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2h7" />;
+const IcCard     = cls => <Ic cls={cls} d="M21 4H3a2 2 0 00-2 2v12a2 2 0 002 2h18a2 2 0 002-2V6a2 2 0 00-2-2z M3 10h18" />;
+const IcGrad     = cls => <Ic cls={cls} d="M22 10L12 5 2 10l10 5 10-5z M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5" />;
+const IcGrid     = cls => <Ic cls={cls} d="M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z" />;
+const IcBell     = cls => <Ic cls={cls} d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" />;
+const IcLinkedin = cls => <Ic cls={cls} d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z M2 9h4v12H2z M4 4a2 2 0 110 4 2 2 0 010-4z" />;
+const IcTwitter  = cls => <Ic cls={cls} d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2c9 5 20 0 20-11.5a4.5 4.5 0 00-.08-.83A7.72 7.72 0 0023 3z" />;
+const IcGithub   = cls => <Ic cls={cls} d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22" />;
+const IcSearch   = cls => <Ic cls={cls} d="M11 19a8 8 0 100-16 8 8 0 000 16zM21 21l-4.35-4.35" />;
+
+const IcAlertCircle = cls => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"
+         strokeLinecap="round" strokeLinejoin="round" className={cls}>
+        <circle cx="12" cy="12" r="10" />
+        <line x1="12" y1="7.5" x2="12" y2="13" />
+        <circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none" />
+    </svg>
 );
 
-// ----- Tab Icons -----
-const BriefcaseIcon = ({className}) => (
-    <Icon
-        path="M20 7h-4.5L15 4.5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2L8.5 7H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z M8 7h8 M12 11v6"
-        className={className}
-    />
-);
-const GraduationCapIcon = ({className}) => (
-    <Icon
-        path="M22 10L12 5 2 10l10 5 10-5z M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"
-        className={className}
-    />
-);
-const UserCogIcon = ({className}) => (
-    <Icon
-        path="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75M12 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0z"
-        className={className}
-    />
-);
-
-// ----- Feature Card Icons -----
-const ClockIcon = ({className}) => (
-    <Icon
-        path="M12 2v4M12 22v-4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M22 12h-4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"
-        className={className}
-    />
-);
-const CalendarIcon = ({className}) => (
-    <Icon
-        path="M8 2v4M16 2v4M3 10h18M21 14V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h7"
-        className={className}
-    />
-);
-const CreditCardIcon = ({className}) => (
-    <Icon
-        path="M21 4H3a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z M3 10h18 M7 15h.01 M11 15h2"
-        className={className}
-    />
-);
-const LayoutGridIcon = ({className}) => (
-    <Icon
-        path="M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z"
-        className={className}
-    />
-);
-const TrendingUpIcon = ({className}) => (
-    <Icon
-        path="M23 6l-7.5 7.5-5-5L3 16 M23 10v-4h-4"
-        className={className}
-    />
-);
-const SchoolIcon = ({className}) => (
-    <Icon
-        path="M22 10L12 5 2 10l10 5 10-5z M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5 M12 5v14"
-        className={className}
-    />
-);
-const FileTextIcon = ({className}) => (
-    <Icon
-        path="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8"
-        className={className}
-    />
-);
-const BookOpenIcon = ({className}) => (
-    <Icon
-        path="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"
-        className={className}
-    />
-);
-
-// ----- Other Icons (already defined) -----
-const SparklesIcon = ({className}) => (
-    <Icon
-        path="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-        className={className}
-    />
-);
-const ArrowRightIcon = ({className}) => (
-    <Icon path="M5 12h14M13 6l6 6-6 6" className={className} strokeWidth={2.5}/>
-);
-const PlayIcon = ({className}) => (
-    <Icon path="M5 3l14 9-14 9V3z" className={className}/>
-);
-const QuoteIcon = ({className}) => (
-    <Icon
-        path="M10 11h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4c0 2.5-2 4-4 4m8 0h-4a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4c0 2.5-2 4-4 4"
-        className={className}
-    />
-);
-const CheckIcon = ({className}) => (
-    <Icon path="M20 6L9 17l-5-5" className={className} strokeWidth={2.5}/>
-);
-const ChevronDownIcon = ({className}) => (
-    <Icon path="m6 9 6 6 6-6" className={className}/>
-);
-const MenuIcon = ({className}) => (
-    <Icon path="M4 6h16M4 12h16M4 18h16" className={className}/>
-);
-const CloseIcon = ({className}) => (
-    <Icon path="M18 6L6 18M6 6l12 12" className={className}/>
-);
-const MailIcon = ({className}) => (
-    <Icon
-        path="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6"
-        className={className}
-    />
-);
-const AwardIcon = ({className}) => (
-    <Icon
-        path="M12 15v4m-4-1v2m8-2v2M6 9h12M6 9a6 6 0 0 1 12 0v2H6V9z"
-        className={className}
-    />
-);
-const ClipboardListIcon = ({className}) => (
-    <Icon
-        path="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2M12 11h4M12 15h4M9 11h.01M9 15h.01"
-        className={className}
-    />
-);
-
-// Social icons
-const LinkedinIcon = ({className}) => (
-    <Icon
-        path="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z M2 9h4v12H2z M4 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"
-        className={className}
-    />
-);
-const TwitterIcon = ({className}) => (
-    <Icon
-        path="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"
-        className={className}
-    />
-);
-const YoutubeIcon = ({className}) => (
-    <Icon
-        path="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33A2.78 2.78 0 0 0 3.4 19c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.25 29 29 0 0 0-.46-5.33z M9.75 15.02L15.5 11.75 9.75 8.48v6.54z"
-        className={className}
-    />
-);
-const GithubIcon = ({className}) => (
-    <Icon
-        path="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
-        className={className}
-    />
-);
-
-/* ---------------------------------- Data ---------------------------------- */
-
-const NAV_LINKS = [
-    {label: 'Features', href: '#features'},
-    {label: 'Why Us', href: '#why-us'},
-    {label: 'Pricing', href: '#pricing'},
-    {label: 'Contact', href: '#contact'},
+/* ── Nav links ───────────────────────────────────────────── */
+const NAV = [
+    { label: 'Home',     href: '#home'     },
+    { label: 'Features', href: '#features' },
+    { label: 'About',    href: '#about'    },
+    { label: 'Pricing',  href: '#pricing'  },
+    { label: 'Contact',  href: '#contact'  },
 ];
 
-const STATS = [
-    {icon: BuildingIcon, value: '500+', label: 'Organizations'},
-    {icon: UsersIcon, value: '10,000+', label: 'Active Users'},
-    {icon: StarIcon, value: '98%', label: 'Satisfaction Rate'},
-    {icon: ShieldIcon, value: '24/7', label: 'Dedicated Support'},
+/* ── Ticker messages ─────────────────────────────────────── */
+const TICKERS = [
+    { pre: 'OrgSphere — ', hi: 'Complete Management Platform', post: ' for Companies & Schools' },
+    { pre: '', hi: '7-Day Free Trial', post: ' Available — No Credit Card Required' },
+    { pre: 'Manage Employees, Students, Attendance, Fees & Payroll ', hi: 'in One Place', post: '' },
+    { pre: '', hi: 'Real-time Dashboards', post: ' with Auto-refreshing Analytics' },
+    { pre: '', hi: 'Enterprise-grade Security', post: ' with Role-based Access Control' },
+    { pre: 'Now supporting ', hi: 'School Portals', post: ' — Classrooms, Fees, Teacher Management' },
 ];
 
-const FEATURE_TABS = [
+const TickerItem = ({ t, cls = '', highlight = true }) => (
+    highlight ? (
+        <span className={`inline-flex items-center gap-2 ${cls}`}>
+            {t.pre}<span className="font-black" style={{ color: '#d62d20' }}>{t.hi}</span>{t.post}
+        </span>
+    ) : (
+        <span className={`inline-flex items-center gap-2 ${cls}`}>
+            {t.pre}{t.hi}{t.post}
+        </span>
+    )
+);
+
+/* ── Hero stats ───────────────────────────────────────────── */
+const HERO_STATS = [
+    { val: '500',   label: 'Organizations'  },
+    { val: '40K',   label: 'People Managed' },
+    { val: '99.9%', label: 'Uptime'         },
+    { val: '2',     label: 'Portal Types'   },
+];
+
+const TRUST_BADGES = ['Company', 'School', 'JWT Auth', 'RBAC'];
+
+/* ── About accordion ─────────────────────────────────────── */
+const ABOUT_TABS = [
     {
-        id: 'companies',
-        label: 'For Companies',
-        icon: BriefcaseIcon,
-        features: [
-            {icon: UsersIcon, title: 'Employee Management', desc: 'Manage employees, roles, and departments'},
-            {icon: ClockIcon, title: 'Attendance Tracking', desc: 'Track daily attendance with ease'},
-            {icon: CalendarIcon, title: 'Leave Management', desc: 'Approve and track leave requests'},
-            {icon: CreditCardIcon, title: 'Payroll & Salary', desc: 'Manage salaries and generate payslips'},
-            {icon: LayoutGridIcon, title: 'Department Management', desc: 'Organize teams and departments'},
-            {icon: TrendingUpIcon, title: 'Performance Reviews', desc: 'Track and evaluate employee performance'},
-        ],
+        title: 'For Companies',
+        body: 'Manage your entire workforce — employees, departments, attendance, leaves and payroll — from a single unified dashboard. Built for teams of 10 to 10,000.',
     },
     {
-        id: 'schools',
-        label: 'For Schools',
-        icon: GraduationCapIcon,
-        features: [
-            {icon: UsersIcon, title: 'Student Management', desc: 'Manage students, profiles, and records'},
-            {icon: SchoolIcon, title: 'Classrooms & Sections', desc: 'Create and manage classes and sections'},
-            {icon: CreditCardIcon, title: 'Fee Management', desc: 'Track fee collections and dues'},
-            {icon: FileTextIcon, title: 'Exam / Results', desc: 'Manage exams and publish results'},
-            {icon: BookOpenIcon, title: 'Teacher Management', desc: 'Manage teachers and assignments'},
-            {icon: CalendarIcon, title: 'Timetable', desc: 'Create and manage class schedules'},
-        ],
+        title: 'For Schools',
+        body: 'Handle student enrollment, classroom management, fee collection, teacher salary, attendance and leaves. Everything a school needs to run smoothly.',
     },
     {
-        id: 'users',
-        label: 'User Management',
-        icon: UserCogIcon,
-        features: [
-            {icon: ShieldIcon, title: 'Role-based Access', desc: 'Admin, Employee, Student, Teacher roles'},
-            {icon: UsersIcon, title: 'Single Sign-On', desc: 'Secure and easy authentication'},
-            {icon: UserCogIcon, title: 'Profile Management', desc: 'Users can update their own profiles'},
-            {icon: CalendarIcon, title: 'Activity Logs', desc: 'Track all user activities'},
-        ],
+        title: 'All Organizations',
+        body: 'OrgSphere is built to scale across any type of organization. Whether you run a company, school or both — one platform handles it all.',
     },
 ];
 
-const STEPS = [
-    {num: '1', title: 'Sign Up', desc: 'Create your free account. No credit card required.'},
-    {num: '2', title: 'Set Up', desc: 'Add your organization, departments, and users.'},
-    {num: '3', title: 'Start Managing', desc: 'Track attendance, fees, and payroll instantly.'},
+/* ── Services ────────────────────────────────────────────── */
+const SERVICES = [
+    { icon: IcUsers,    title: 'Employee & Student Management', desc: 'Complete profiles, roles, departments and classroom records in one place.' },
+    { icon: IcClock,    title: 'Attendance Tracking',           desc: 'Daily attendance for employees and students with check-in/out history.'   },
+    { icon: IcCalendar, title: 'Leave Management',              desc: 'Apply, approve and track leave requests digitally — no paperwork.'        },
+    { icon: IcCard,     title: 'Payroll & Fee Management',      desc: 'Employee salary records and student fee collection with payment history.'  },
+    { icon: IcGrid,     title: 'Department & Classroom Setup',  desc: 'Organize teams, departments and school classrooms with a tree view.'      },
+    { icon: IcTrend,    title: 'Real-time Analytics',           desc: 'Auto-refreshing dashboards, KPI charts and recent activity feeds.'        },
 ];
 
-const WHY_CARDS = [
-    {
-        icon: ShieldIcon,
-        title: 'Secure & Reliable',
-        desc: 'Enterprise-grade security with data encryption and role-based access'
-    },
-    {
-        icon: TrendingUpIcon,
-        title: 'Real-time Analytics',
-        desc: 'Track performance with live dashboards and custom reports'
-    },
-    {icon: UsersIcon, title: '24/7 Support', desc: 'Dedicated support team for your organization, always available'},
-    {
-        icon: SparklesIcon,
-        title: 'Scalable Solution',
-        desc: 'Grow your business without limits, from startups to enterprises'
-    },
+/* ── Notices ─────────────────────────────────────────────── */
+const NOTICES = [
+    { title: 'OrgSphere v2.0 launched — New school portal features',      date: '5 Aug 2026' },
+    { title: 'Free 7-day trial now available for all plans',               date: '3 Aug 2026' },
+    { title: 'New: Department-wise attendance filtering added',            date: '1 Aug 2026' },
+    { title: 'Employee salary management — bulk update support added',     date: '28 Jul 2026' },
+    { title: 'Student fee tracking — partial payment support live',        date: '25 Jul 2026' },
 ];
 
-const TESTIMONIALS = [
-    {
-        text: 'OrgSphere transformed our school management. Fee collection and attendance tracking are now a breeze!',
-        name: 'Rajesh Kumar',
-        role: 'Principal, ABC School',
-        initials: 'RK'
-    },
-    {
-        text: 'We manage 200+ employees across 6 departments with ease. The payroll feature is a lifesaver.',
-        name: 'Priya Sharma',
-        role: 'HR Manager, XYZ Company',
-        initials: 'PS'
-    },
-    {
-        text: 'The user-friendly interface and 24/7 support make OrgSphere the best choice for our organization.',
-        name: 'Amit Verma',
-        role: 'CTO, TechStart Inc.',
-        initials: 'AV'
-    },
-];
-
-const PLANS = [
-    {
-        name: 'Free Trial', price: '7 Days', period: 'Free', highlighted: true,
-        features: ['All features included', 'No credit card required', 'Cancel anytime'],
-        cta: 'Start Free Trial',
-    },
-    {
-        name: 'Pro Monthly', price: '₹499', period: '/month', highlighted: false,
-        features: ['All features included', 'Up to 100 users', 'Email support'],
-        cta: 'Buy Now',
-    },
-    {
-        name: 'Pro Annual', price: '₹4,999', period: '/year', highlighted: false, badge: 'Save 16%',
-        features: ['Save 16%', 'All features included', 'Up to 500 users', 'Priority support'],
-        cta: 'Buy Now',
-    },
-];
-
+/* ── FAQ ─────────────────────────────────────────────────── */
 const FAQS = [
-    {
-        q: 'What is OrgSphere?',
-        a: 'OrgSphere is a complete management solution for companies and schools, offering features like employee/student management, attendance, fees, leaves, and payroll.'
-    },
-    {
-        q: 'Is it free?',
-        a: 'Yes, we offer a 7-day free trial. After that, choose a plan that fits your organization\'s needs.'
-    },
-    {q: 'Can I switch plans?', a: 'Yes, you can upgrade or downgrade your plan anytime from your account settings.'},
-    {
-        q: 'Is my data secure?',
-        a: 'Absolutely. We use enterprise-grade encryption, regular backups, and role-based access to keep your data safe.'
-    },
-    {q: 'Do you offer support?', a: 'Yes, we provide 24/7 support via live chat and email for all paid plans.'},
+    { q: 'What is OrgSphere?',                          a: 'OrgSphere is a complete SaaS management platform for companies and schools — employee/student management, attendance, fees, leaves and payroll, all in one place.' },
+    { q: 'Is there a free trial?',                      a: 'Yes — 7 days free with every feature unlocked. No credit card required.' },
+    { q: 'Can I manage both a company and a school?',   a: 'Yes. One account supports multiple organization types — each with its own portal, roles and data.' },
+    { q: 'Is my data secure?',                          a: 'We use JWT authentication, role-based access control and encrypted storage. Your data is fully isolated per organization.' },
+    { q: 'How do I get started?',                       a: 'Click "Get Started", choose your organization type (Company or School), register and you\'re live in under 2 minutes.' },
 ];
 
+/* ── Pricing plans ───────────────────────────────────────── */
+const PLANS = [
+    { name: 'Free Trial',  price: 'Free',  sub: '7 days · All features',
+        items: ['All features included', 'Up to 50 users', 'Community support'],               cta: 'Start Free',   hot: false },
+    { name: 'Pro',         price: '₹499',  sub: 'per month',
+        items: ['All features', 'Up to 200 users', 'Email support', 'Advanced analytics'],     cta: 'Get Pro',      hot: true  },
+    { name: 'Annual',      price: '₹4,999',sub: 'per year · Save 17%',
+        items: ['All features', 'Unlimited users', 'Priority support', 'Custom branding'],     cta: 'Go Annual',    hot: false },
+];
+
+/* ── Footer columns ──────────────────────────────────────── */
 const FOOTER_COLS = [
-    {title: 'Product', links: ['Features', 'Pricing', 'Integrations', 'Changelog']},
-    {title: 'Company', links: ['About', 'Careers', 'Blog', 'Contact']},
-    {title: 'Resources', links: ['Help Center', 'Documentation', 'API', 'Community']},
+    { title: 'Platform',  links: ['Features', 'Pricing', 'Changelog', 'API Docs'] },
+    { title: 'Company',   links: ['About Us', 'Careers', 'Blog', 'Press']         },
+    { title: 'Support',   links: ['Help Center', 'Documentation', 'Community', 'Status'] },
 ];
 
-/* ------------------------------- Component -------------------------------- */
+/* ── Palette ── */
+const NAVY   = '#1a2b3c';   /* darker grey (was #2d3748) */
+const RED    = '#d62d20';
+const RED_D  = '#c62828';
+const GOLD   = '#f0a500';
+const TOPBAR_NAVY = '#1a3a5a';
 
+/* ── Logo ────────────────────────────────────────────────── */
+const Logo = () => (
+    <div className="flex items-center gap-2.5">
+        <div className="w-9 h-9 flex items-center justify-center shrink-0" style={{ background: RED }}>
+            <svg className="w-5 h-5 text-white fill-white" viewBox="0 0 24 24">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            </svg>
+        </div>
+        <span className="font-bold text-lg tracking-tight" style={{ color: NAVY }}>OrgSphere</span>
+    </div>
+);
+
+const BtnPrimary = ({ children, onClick, className = '' }) => (
+    <button onClick={onClick}
+            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-xs font-bold text-white transition-all hover:brightness-110 ${className}`}
+            style={{ background: RED }}>
+        {children}
+    </button>
+);
+
+const BtnSecondary = ({ children, onClick, className = '' }) => (
+    <button onClick={onClick}
+            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-xs font-bold text-white transition-all hover:brightness-110 ${className}`}
+            style={{ background: NAVY }}>
+        {children}
+    </button>
+);
+
+const BLUE = '#2563eb';
+const BtnBlue = ({ children, onClick, className = '' }) => (
+    <button onClick={onClick}
+            className={`inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-md text-xs font-bold text-white transition-all hover:brightness-110 ${className}`}
+            style={{ background: BLUE }}>
+        {children}
+    </button>
+);
+
+/* ═══════════════════════════════════════════════════════════
+   MAIN COMPONENT
+══════════════════════════════════════════════════════════ */
 const HomePage = () => {
     const navigate = useNavigate();
-    const [menuOpen, setMenuOpen] = useState(false);
+    const [navOpen,  setNavOpen]  = useState(false);
     const [scrolled, setScrolled] = useState(false);
-    const [activeTab, setActiveTab] = useState('companies');
-    const [openFaq, setOpenFaq] = useState(0);
-    const [registerOpen, setRegisterOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState(0);
+    const [openFaq,  setOpenFaq]  = useState(-1);
+    const [regOpen,  setRegOpen]  = useState(false);
 
     useEffect(() => {
-        const onScroll = () => setScrolled(window.scrollY > 20);
-        window.addEventListener('scroll', onScroll);
-        return () => window.removeEventListener('scroll', onScroll);
+        const fn = () => setScrolled(window.scrollY > 10);
+        window.addEventListener('scroll', fn);
+        return () => window.removeEventListener('scroll', fn);
     }, []);
 
-    const currentTab = FEATURE_TABS.find((t) => t.id === activeTab);
-
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900 antialiased">
-            {/* Animations */}
+        <div className="min-h-screen bg-white text-slate-900 antialiased" style={{ fontFamily: "'Segoe UI','Inter',Arial,sans-serif" }}>
             <style>{`
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
-        @keyframes blob { 0%,100% { transform: translate(0,0) scale(1); } 33% { transform: translate(20px,-30px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(0.95); } }
-        .animate-fade-up { animation: fadeUp .7s ease-out both; }
-        .animate-floaty { animation: floaty 6s ease-in-out infinite; }
-        .animate-blob { animation: blob 12s ease-in-out infinite; }
-        html { scroll-behavior: smooth; }
-      `}</style>
+                @keyframes ticker { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
+                @keyframes tickerGap {
+                    0%   { transform: translateX(100%); }
+                    55%  { transform: translateX(-100%); }
+                    100% { transform: translateX(-100%); }
+                }
+                @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+                .ticker-track { animation: ticker 45s linear infinite; display: flex; gap: 60px; white-space: nowrap; }
+                /* Updates ticker – slower (250s) */
+                .ticker-track-gap { animation: tickerGap 250s linear infinite; display: flex; gap: 60px; white-space: nowrap; }
+                .au { animation: fadeUp .55s ease both }
+                html { scroll-behavior: smooth }
+                .nav-link { position:relative; font-size:14px; font-weight:500; color:#1e293b; transition:color .2s; padding:4px 0; }
+                .nav-link:hover { color:${RED} }
+                .nav-link::after { content:''; position:absolute; bottom:-2px; left:0; right:0; height:2px; background:${RED}; transform:scaleX(0); transition:transform .2s; }
+                .nav-link:hover::after { transform:scaleX(1) }
+                .service-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,0.1) }
+                .service-card { transition: all .25s ease }
+                /* Updates row – with borders for visibility */
+                .updates-row {
+                    max-height: 34px;
+                    overflow: hidden;
+                    transition: max-height .3s ease, opacity .25s ease;
+                    opacity: 1;
+                    border-top: 1px solid rgba(255,255,255,0.08);
+                    border-bottom: 1px solid rgba(255,255,255,0.08);
+                }
+                .updates-row.is-hidden { max-height: 0; opacity: 0; border: none; }
+                /* Watermark – lowercase, visible light grey */
+                .watermark {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 38vw;
+                    font-weight: 900;
+                    letter-spacing: 0.1em;
+                    color: rgba(255, 255, 255, 0.06);
+                    white-space: nowrap;
+                    pointer-events: none;
+                    user-select: none;
+                    text-transform: none;
+                }
+                @media (min-width: 768px) {
+                    .watermark { font-size: 32vw; }
+                }
+            `}</style>
 
-            {/* ============================ 1. NAVBAR ============================ */}
-            <nav
-                className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 flex justify-center px-4 pt-5 ${
-                    scrolled ? 'bg-white/80 shadow-md backdrop-blur-lg' : 'bg-transparent'
-                }`}
-            >
-                <div
-                    className={`flex items-center justify-between gap-6 px-5 py-2.5 w-full max-w-4xl transition-all duration-300 rounded-full ${
-                        scrolled
-                            ? 'bg-white/80 shadow-md backdrop-blur-lg'
-                            : 'bg-transparent'
-                    }`}
-                    style={{
-                        borderRadius: 999,
-                        border: scrolled ? 'none' : '1px solid rgba(255,255,255,0.08)',
-                        background: scrolled ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.04)',
-                        backdropFilter: 'blur(20px)',
-                        boxShadow: scrolled ? '0 8px 32px rgba(0,0,0,0.1)' : 'none'
-                    }}
-                >
-                    {/* logo */}
-                    <Link to="/" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg"
-                  style={{background: 'linear-gradient(135deg, #7c3aed, #4f46e5)'}}>
-              <SparklesIcon className="h-4 w-4 text-white"/>
-            </span>
-                        <span className="font-bold text-sm tracking-tight text-slate-900">OrgSphere</span>
-                    </Link>
-
-                    {/* desktop links */}
-                    <div className="hidden md:flex items-center gap-6">
-                        {NAV_LINKS.map((l) => (
-                            <a
-                                key={l.href}
-                                href={l.href}
-                                className="text-xs font-medium transition-colors hover:text-violet-600"
-                                style={{color: '#4b5563'}}
-                                onMouseEnter={e => e.target.style.color = '#7c3aed'}
-                                onMouseLeave={e => e.target.style.color = '#4b5563'}
-                            >
-                                {l.label}
-                            </a>
-                        ))}
-                    </div>
-
-                    {/* desktop actions */}
-                    <div className="hidden md:flex items-center gap-2">
-                        <Link
-                            to="/login"
-                            className="text-xs font-medium px-4 py-1.5 rounded-full transition-all hover:bg-slate-100"
-                            style={{color: '#4b5563', border: 'none', background: 'transparent'}}
-                            onMouseEnter={e => {
-                                e.currentTarget.style.background = 'rgba(0,0,0,0.05)';
-                                e.currentTarget.style.color = '#1f2937'
-                            }}
-                            onMouseLeave={e => {
-                                e.currentTarget.style.background = 'transparent';
-                                e.currentTarget.style.color = '#4b5563'
-                            }}
-                        >
-                            Sign in
-                        </Link>
-                        <button
-                            onClick={() => setRegisterOpen(true)}
-                            className="text-xs font-semibold px-4 py-1.5 rounded-full flex items-center gap-1 transition-all hover:scale-105 active:scale-95"
-                            style={{background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff'}}
-                            onMouseEnter={e => e.currentTarget.style.boxShadow = '0 4px 15px rgba(124,58,237,0.4)'}
-                            onMouseLeave={e => e.currentTarget.style.boxShadow = 'none'}
-                        >
-                            Get Started
-                            <ArrowRightIcon className="w-3 h-3"/>
-                        </button>
-                    </div>
-
-                    {/* mobile toggle */}
-                    <button className="md:hidden" onClick={() => setMenuOpen(v => !v)}>
-                        {menuOpen ? <CloseIcon className="w-5 h-5"/> : <MenuIcon className="w-5 h-5"/>}
-                    </button>
-                </div>
-
-                {/* mobile menu */}
-                {menuOpen && (
-                    <div className="absolute top-20 left-4 right-4 p-5 flex flex-col gap-3 rounded-2xl" style={{
-                        background: 'rgba(255,255,255,0.95)',
-                        border: '1px solid rgba(0,0,0,0.08)',
-                        backdropFilter: 'blur(12px)'
-                    }}>
-                        {NAV_LINKS.map(l => <a key={l.href} href={l.href} className="text-sm hover:text-violet-600"
-                                               style={{color: '#4b5563'}}
-                                               onClick={() => setMenuOpen(false)}>{l.label}</a>)}
-                        <Link to="/login" className="text-sm hover:text-violet-600" style={{color: '#4b5563'}}
-                              onClick={() => setMenuOpen(false)}>Sign in</Link>
-                        <button
-                            className="text-sm font-semibold rounded-full py-2 text-center transition-all hover:scale-[1.02]"
-                            style={{ background: 'linear-gradient(135deg, #7c3aed, #4f46e5)', color: '#fff' }}
-                            onClick={() => { setRegisterOpen(true); setMenuOpen(false); }}
-                        >
-                            Get Started
-                        </button>
-                    </div>
-                )}
-            </nav>
-
-            {/* ============================= 2. HERO ============================= */}
-            <header
-                className="relative overflow-hidden bg-gradient-to-b from-violet-50 via-white to-white pt-32 pb-20 sm:pt-40">
-                {/* decorative blobs */}
-                <div
-                    className="pointer-events-none absolute -top-20 -left-24 h-72 w-72 rounded-full bg-violet-300/40 blur-3xl animate-blob"/>
-                <div
-                    className="pointer-events-none absolute top-10 right-0 h-72 w-72 rounded-full bg-indigo-300/40 blur-3xl animate-blob"
-                    style={{animationDelay: '3s'}}/>
-
-                <div className="relative mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <span
-              className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-white/70 px-4 py-1.5 text-sm font-medium text-violet-700 shadow-sm backdrop-blur">
-            <span aria-hidden>🚀</span> New: 7-Day Free Trial Available
-          </span>
-
-                    <h1 className="mx-auto mt-6 max-w-4xl text-balance text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
-                        Manage Your{' '}
-                        <span className="bg-gradient-to-r from-violet-600 to-indigo-600 bg-clip-text text-transparent">
-              Company &amp; School
-            </span>{' '}
-                        All in One Place
-                    </h1>
-
-                    <p className="mx-auto mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-slate-600">
-                        OrgSphere is the complete management solution for companies and schools. Streamline your
-                        operations with our powerful SaaS platform.
-                    </p>
-
-                    <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-                        <button
-                            onClick={() => setRegisterOpen(true)}
-                            className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-xl shadow-violet-500/30 transition-transform hover:scale-105"
-                        >
-                            Get Started <ArrowRightIcon className="h-5 w-5"/>
-                        </button>
-                        <button
-                            className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-8 py-3.5 text-base font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50">
-                            <PlayIcon className="h-5 w-5 text-violet-600"/> Watch Demo
-                        </button>
-                    </div>
-
-                    <div className="mt-8 flex items-center justify-center gap-2 text-sm text-slate-500">
-                        <div className="flex">
-                            {[...Array(5)].map((_, i) => (
-                                <StarIcon key={i} className="h-4 w-4 fill-amber-400 text-amber-400"/>
+            {/* ══ STICKY HEADER GROUP ══ */}
+            <div className="sticky top-0 z-50">
+                {/* Top info bar — light blue */}
+                <div className="hidden md:flex items-center gap-4 text-white text-xs py-1" style={{ background: TOPBAR_NAVY }}>
+                    <span className="shrink-0 flex items-center gap-1 font-bold px-2.5 py-0.5 text-[11px] rounded-full ml-4" style={{ background: GOLD, color: NAVY }}>
+                        Free Trial — 7 Days
+                    </span>
+                    <div className="flex-1 overflow-hidden max-w-7xl">
+                        <div className="ticker-track font-medium opacity-95">
+                            {[...TICKERS, ...TICKERS].map((t, i) => (
+                                <span key={i} className="inline-flex items-center gap-2">
+                                    <TickerItem t={t} highlight={false} />
+                                    <span className="opacity-40">|</span>
+                                </span>
                             ))}
                         </div>
-                        Trusted by 500+ organizations worldwide
                     </div>
+                    <div className="shrink-0 flex items-center gap-4 pr-4">
+                        <span className="flex items-center gap-1.5 opacity-90">
+                            {IcPhone('w-3 h-3')} +91 7417015597
+                        </span>
+                        <span className="opacity-30">|</span>
+                        <span className="flex items-center gap-1.5 opacity-90">
+                            {IcMail('w-3 h-3')} abhishekrathore7417@gmail.com
+                        </span>
+                        <span className="opacity-30">|</span>
+                        <button onClick={() => setRegOpen(true)} className="font-bold hover:underline flex items-center gap-1">
+                            Register {IcArrow('w-3 h-3')}
+                        </button>
+                    </div>
+                </div>
 
-                    {/* Dashboard mockup */}
-                    <div className="mx-auto mt-14 max-w-4xl animate-fade-up">
-                        <div
-                            className="rounded-3xl border border-slate-200 bg-white p-3 shadow-2xl shadow-violet-500/10">
-                            <div className="rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-700 p-8 sm:p-14">
-                                <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
-                                    {[
-                                        {icon: BuildingIcon, label: 'Companies'},
-                                        {icon: GraduationCapIcon, label: 'Schools'},
-                                        {icon: UsersIcon, label: 'Users'},
-                                        {icon: TrendingUpIcon, label: 'Analytics'},
-                                    ].map((item, i) => (
-                                        <div
-                                            key={item.label}
-                                            className="flex flex-col items-center gap-3 rounded-2xl bg-white/10 p-5 text-white backdrop-blur animate-floaty"
-                                            style={{animationDelay: `${i * 0.6}s`}}
-                                        >
-                                            <item.icon className="h-8 w-8"/>
-                                            <span className="text-sm font-medium">{item.label}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                {/* Navbar */}
+                <nav className={`bg-white transition-shadow duration-300 ${scrolled ? 'shadow-md' : 'shadow-sm'}`}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                        <div className="flex items-center justify-between h-[72px] gap-6">
+                            <Link to="/"><Logo /></Link>
+                            <div className="hidden lg:flex items-center gap-7">
+                                {NAV.map(l => <a key={l.href} href={l.href} className="nav-link">{l.label}</a>)}
                             </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* ============================ 3. STATS ============================ */}
-            <section className="relative z-10 -mt-10 px-4 sm:px-6 lg:px-8">
-                <div
-                    className="mx-auto grid max-w-6xl grid-cols-2 gap-4 rounded-3xl border border-slate-100 bg-white p-6 shadow-xl sm:gap-6 lg:grid-cols-4">
-                    {STATS.map((stat) => (
-                        <div key={stat.label}
-                             className="flex flex-col items-center gap-2 rounded-2xl p-4 text-center transition-colors hover:bg-violet-50">
-              <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600">
-                <stat.icon className="h-6 w-6"/>
-              </span>
-                            <span className="text-2xl font-extrabold sm:text-3xl">{stat.value}</span>
-                            <span className="text-sm text-slate-500">{stat.label}</span>
-                        </div>
-                    ))}
-                </div>
-            </section>
-
-            {/* =========================== 4. FEATURES ========================== */}
-            <section id="features" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-balance text-3xl font-extrabold sm:text-4xl">Everything You Need to Manage</h2>
-                    <p className="mt-4 text-lg text-slate-600">
-                        Designed for both educational institutions and corporate environments.
-                    </p>
-                </div>
-
-                {/* Tabs */}
-                <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
-                    {FEATURE_TABS.map((tab) => {
-                        const active = tab.id === activeTab;
-                        const IconComp = tab.icon;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition-all ${
-                                    active
-                                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
-                                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                                }`}
-                            >
-                                <IconComp className="h-5 w-5"/>
-                                {tab.label}
+                            <div className="hidden md:flex items-center gap-3">
+                                <button aria-label="Search" className="w-10 h-10 rounded-full border border-slate-200 flex items-center justify-center text-slate-500 hover:border-slate-300 transition-colors">
+                                    {IcSearch('w-4 h-4')}
+                                </button>
+                                <Link to="/login" className="text-sm font-bold text-slate-600 px-2 hover:text-red-600 transition-colors">Sign In</Link>
+                                <BtnPrimary onClick={() => setRegOpen(true)}>Register</BtnPrimary>
+                                <button aria-label="Menu" onClick={() => setNavOpen(v => !v)}
+                                        className="w-10 h-10 rounded-md flex items-center justify-center shrink-0" style={{ background: NAVY }}>
+                                    {IcMenu('w-4 h-4 text-white')}
+                                </button>
+                            </div>
+                            <button className="md:hidden" onClick={() => setNavOpen(v => !v)}>
+                                {navOpen ? IcClose('w-5 h-5 text-slate-700') : IcMenu('w-5 h-5 text-slate-700')}
                             </button>
-                        );
-                    })}
-                </div>
-
-                {/* Feature grid */}
-                <div key={activeTab} className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                    {currentTab.features.map((f, i) => {
-                        const IconComp = f.icon;
-                        return (
-                            <div
-                                key={f.title}
-                                className="group animate-fade-up rounded-2xl border border-slate-100 bg-white p-6 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl"
-                                style={{animationDelay: `${i * 0.08}s`}}
-                            >
-                <span
-                    className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-violet-100 text-violet-600 transition-colors group-hover:bg-violet-600 group-hover:text-white">
-                  <IconComp className="h-6 w-6"/>
-                </span>
-                                <h3 className="text-lg font-bold">{f.title}</h3>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600">{f.desc}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
-
-            {/* ========================= 5. HOW IT WORKS ======================== */}
-            <section className="bg-slate-50 py-24">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="mx-auto max-w-2xl text-center">
-                        <h2 className="text-balance text-3xl font-extrabold sm:text-4xl">Get Started in 3 Simple
-                            Steps</h2>
+                        </div>
                     </div>
+                    {navOpen && (
+                        <div className="lg:hidden bg-white border-t border-slate-100 px-4 py-4 flex flex-col gap-3 shadow-lg">
+                            {NAV.map(l => <a key={l.href} href={l.href} className="text-sm font-semibold text-slate-600 hover:text-red-600" onClick={() => setNavOpen(false)}>{l.label}</a>)}
+                            <hr className="border-slate-100" />
+                            <Link to="/login" onClick={() => setNavOpen(false)} className="text-sm font-semibold text-slate-600">Sign In</Link>
+                            <BtnPrimary onClick={() => { setRegOpen(true); setNavOpen(false); }} className="w-full">Register</BtnPrimary>
+                        </div>
+                    )}
+                </nav>
 
-                    <div className="mt-16 grid grid-cols-1 gap-10 md:grid-cols-3">
-                        {STEPS.map((step, i) => (
-                            <div key={step.num} className="relative flex flex-col items-center text-center">
-                <span
-                    className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-2xl font-extrabold text-white shadow-lg shadow-violet-500/30">
-                  {step.num}
-                </span>
-                                {i < STEPS.length - 1 && (
-                                    <ArrowRightIcon
-                                        className="absolute top-6 left-[calc(50%+3.5rem)] hidden h-8 w-8 text-violet-300 md:block"/>
-                                )}
-                                <h3 className="mt-6 text-xl font-bold">{step.title}</h3>
-                                <p className="mt-2 max-w-xs text-slate-600">{step.desc}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* =========================== 6. WHY US ============================ */}
-            <section id="why-us" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-balance text-3xl font-extrabold sm:text-4xl">Why Choose OrgSphere?</h2>
-                </div>
-
-                <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                    {WHY_CARDS.map((card, i) => {
-                        const IconComp = card.icon;
-                        return (
-                            <div
-                                key={card.title}
-                                className="animate-fade-up rounded-2xl border border-slate-100 bg-white p-8 text-center shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl"
-                                style={{animationDelay: `${i * 0.08}s`}}
-                            >
-                <span
-                    className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30">
-                  <IconComp className="h-7 w-7"/>
-                </span>
-                                <h3 className="text-lg font-bold">{card.title}</h3>
-                                <p className="mt-2 text-sm leading-relaxed text-slate-600">{card.desc}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-            </section>
-
-            {/* ======================== 7. TESTIMONIALS ========================= */}
-            <section className="bg-gradient-to-b from-violet-50 to-white py-24">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="mx-auto max-w-2xl text-center">
-                        <h2 className="text-balance text-3xl font-extrabold sm:text-4xl">What Our Users Say</h2>
-                    </div>
-
-                    <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-                        {TESTIMONIALS.map((t, i) => (
-                            <div
-                                key={t.name}
-                                className="animate-fade-up flex flex-col rounded-2xl border border-slate-100 bg-white p-8 shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl"
-                                style={{animationDelay: `${i * 0.1}s`}}
-                            >
-                                <QuoteIcon className="h-8 w-8 text-violet-300"/>
-                                <p className="mt-4 flex-1 leading-relaxed text-slate-700">{t.text}</p>
-                                <div className="mt-6 flex items-center gap-3">
-                  <span
-                      className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-violet-600 to-indigo-600 text-sm font-bold text-white">
-                    {t.initials}
-                  </span>
-                                    <div>
-                                        <p className="text-sm font-bold">{t.name}</p>
-                                        <p className="text-xs text-slate-500">{t.role}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* =========================== 8. PRICING =========================== */}
-            <section id="pricing" className="mx-auto max-w-7xl px-4 py-24 sm:px-6 lg:px-8">
-                <div className="mx-auto max-w-2xl text-center">
-                    <h2 className="text-balance text-3xl font-extrabold sm:text-4xl">Start Your 7-Day Free Trial
-                        Today!</h2>
-                    <p className="mt-4 text-lg text-slate-600">
-                        No credit card required. Get started with OrgSphere and transform your organization.
-                    </p>
-                </div>
-
-                <div className="mt-14 grid grid-cols-1 gap-6 md:grid-cols-3">
-                    {PLANS.map((plan) => (
-                        <div
-                            key={plan.name}
-                            className={`relative flex flex-col rounded-3xl bg-white p-8 shadow-lg transition-all hover:-translate-y-1 hover:shadow-2xl ${
-                                plan.highlighted
-                                    ? 'border-2 border-transparent bg-gradient-to-b from-violet-600 to-indigo-600 text-white shadow-violet-500/30'
-                                    : 'border border-slate-100'
-                            }`}
-                        >
-                            {plan.highlighted && (
-                                <span
-                                    className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-4 py-1 text-xs font-bold text-amber-950 shadow">
-                  MOST POPULAR
-                </span>
-                            )}
-                            {plan.badge && !plan.highlighted && (
-                                <span
-                                    className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-violet-100 px-4 py-1 text-xs font-bold text-violet-700">
-                  {plan.badge}
-                </span>
-                            )}
-
-                            <h3 className={`text-lg font-bold ${plan.highlighted ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
-                            <div className="mt-4 flex items-end gap-1">
-                                <span className="text-4xl font-extrabold">{plan.price}</span>
-                                <span
-                                    className={`mb-1 text-sm ${plan.highlighted ? 'text-violet-100' : 'text-slate-500'}`}>{plan.period}</span>
-                            </div>
-
-                            <ul className="mt-6 flex-1 space-y-3">
-                                {plan.features.map((feat) => (
-                                    <li key={feat} className="flex items-center gap-2 text-sm">
-                                        <CheckIcon
-                                            className={`h-5 w-5 shrink-0 ${plan.highlighted ? 'text-amber-300' : 'text-violet-600'}`}/>
-                                        <span
-                                            className={plan.highlighted ? 'text-violet-50' : 'text-slate-600'}>{feat}</span>
-                                    </li>
+                {/* UPDATES ticker — with borders for visibility */}
+                <div className={`overflow-hidden updates-row ${scrolled ? 'is-hidden' : ''}`} style={{ background: NAVY }}>
+                    <div className="flex items-stretch">
+                        <div className="shrink-0 flex items-center gap-1.5 text-[11px] font-black text-white px-2.5" style={{ background: RED }}>
+                            {IcAlertCircle('w-3.5 h-3.5')} UPDATES
+                        </div>
+                        <div className="overflow-hidden flex-1 flex items-center py-1.5">
+                            <div className="ticker-track-gap text-[11px] text-slate-200 font-semibold">
+                                {[...TICKERS, ...TICKERS].map((t, i) => (
+                                    <TickerItem key={i} t={t} />
                                 ))}
-                            </ul>
-
-                            <button
-                                onClick={() => setRegisterOpen(true)}
-                                className={`mt-8 inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition-transform hover:scale-105 ${
-                                    plan.highlighted
-                                        ? 'bg-white text-violet-700 shadow-lg'
-                                        : 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white shadow-lg shadow-violet-500/30'
-                                }`}
-                            >
-                                {plan.cta}
-                            </button>
+                            </div>
                         </div>
-                    ))}
+                    </div>
+                </div>
+            </div>
+
+            {/* ══ HERO ══ */}
+            <section id="home" className="relative overflow-hidden" style={{ background: NAVY, minHeight: '560px' }}>
+                {/* Watermark "org" — lowercase, visible */}
+                <div className="watermark">org</div>
+                <div className="absolute inset-0 opacity-[0.04]"
+                     style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.8) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
+
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 flex flex-col lg:flex-row items-center gap-12">
+                    <div className="flex-1 text-white au">
+                        <p className="text-xs font-bold uppercase tracking-widest mb-4 flex items-center gap-2 text-white">
+                            <span className="w-8 h-0.5 inline-block" style={{ background: GOLD }} />
+                            THE COMPLETE ORG MANAGEMENT PLATFORM
+                        </p>
+                        <h1 className="text-4xl sm:text-5xl font-black leading-tight mb-5" style={{ letterSpacing: '-0.02em' }}>
+                            One Platform for<br />
+                            <span style={{ color: RED }}>Companies + Schools</span><br />
+                            + All Organizations
+                        </h1>
+                        <p className="text-slate-300 text-base leading-relaxed mb-8 max-w-xl">
+                            Manage employees, students, attendance, fees, payroll and leaves — all from a single dashboard. Built for companies, schools and every organization in between.
+                        </p>
+                        <div className="flex flex-col gap-2 mb-8">
+                            <div className="flex flex-wrap gap-2">
+                                {['Employee Management', 'School Portal', 'Attendance Tracking'].map(b => (
+                                    <span key={b} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border text-slate-200"
+                                          style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.07)' }}>
+                                        <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: RED }} />
+                                        {b}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {['Fee Management', 'Payroll'].map(b => (
+                                    <span key={b} className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border text-slate-200"
+                                          style={{ borderColor: 'rgba(255,255,255,0.2)', background: 'rgba(255,255,255,0.07)' }}>
+                                        <span className="inline-block w-1.5 h-1.5 rounded-full" style={{ background: RED }} />
+                                        {b}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="flex flex-wrap gap-3">
+                            <BtnPrimary onClick={() => setRegOpen(true)} className="text-xs px-5 py-2.5">
+                                {IcArrow('w-4 h-4')} Apply Now
+                            </BtnPrimary>
+                            <BtnBlue onClick={() => setRegOpen(true)} className="text-xs px-5 py-2.5">
+                                {IcArrow('w-4 h-4')} Book a Demo
+                            </BtnBlue>
+                        </div>
+                    </div>
+
+                    <div className="au w-full lg:w-96 shrink-0" style={{ animationDelay: '.15s' }}>
+                        <div className="rounded-2xl p-6 sm:p-7" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                            <div className="grid grid-cols-2 gap-x-8 gap-y-8">
+                                {HERO_STATS.map(s => (
+                                    <div key={s.label}>
+                                        <p className="font-bold text-white" style={{ fontSize: '1.9rem', lineHeight: 1 }}>
+                                            {s.val}{!s.val.includes('%') && <span style={{ color: RED }}>+</span>}
+                                        </p>
+                                        <p className="text-xs mt-1.5" style={{ color: '#8fa0b8' }}>{s.label}</p>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="mt-6 pt-5 grid grid-cols-2 sm:grid-cols-4 gap-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                                {TRUST_BADGES.map(b => (
+                                    <div key={b} className="text-center rounded-lg py-2.5 px-1" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                                        <p className="text-[11px] font-semibold" style={{ color: '#dbe3ec' }}>{b}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
-            {/* ============================= 9. FAQ ============================= */}
-            <section className="bg-slate-50 py-24">
-                <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-                    <div className="text-center">
-                        <h2 className="text-balance text-3xl font-extrabold sm:text-4xl">Frequently Asked Questions</h2>
+            {/* ══ ABOUT ══ */}
+            <section id="about" className="py-14 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-start">
+                        <div className="au">
+                            <p className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: RED }}>ABOUT ORGSPHERE</p>
+                            <h2 className="text-3xl font-black text-slate-900 mb-5" style={{ letterSpacing: '-0.02em' }}>
+                                One Goal — Smarter Organization Management
+                            </h2>
+                            <p className="text-slate-600 leading-relaxed mb-4">
+                                OrgSphere is a unified SaaS platform designed to eliminate the complexity of managing organizations. Whether you run a <strong>company with departments and employees</strong> or a <strong>school with classrooms, teachers and students</strong> — we've built one platform for all of it.
+                            </p>
+                            <p className="text-slate-600 leading-relaxed mb-6">
+                                From attendance tracking and leave management to payroll, fee collection and real-time analytics — every feature is crafted for the way modern organizations actually work.
+                            </p>
+                            <div className="flex flex-wrap gap-6">
+                                {[{ n: '500+', l: 'Organizations' }, { n: '10K+', l: 'Users' }, { n: '2', l: 'Portals' }].map(s => (
+                                    <div key={s.l}>
+                                        <p className="text-2xl font-black" style={{ color: RED }}>{s.n}</p>
+                                        <p className="text-xs text-slate-500 font-medium">{s.l}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="au" style={{ animationDelay: '.12s' }}>
+                            <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">WE SERVE</p>
+                            <div className="space-y-2">
+                                {ABOUT_TABS.map((t, i) => {
+                                    const open = activeTab === i;
+                                    return (
+                                        <div key={t.title} className="border rounded-xl overflow-hidden transition-all"
+                                             style={{ borderColor: open ? RED : '#e2e8f0' }}>
+                                            <button onClick={() => setActiveTab(i)}
+                                                    className="w-full flex items-center justify-between px-5 py-4 text-left"
+                                                    style={{ background: open ? RED : 'white' }}>
+                                                <span className={`font-bold text-sm ${open ? 'text-white' : 'text-slate-700'}`}>{t.title}</span>
+                                                {IcChevron(`w-4 h-4 transition-transform duration-300 ${open ? 'rotate-180 text-white' : 'text-slate-400'}`)}
+                                            </button>
+                                            {open && (
+                                                <div className="px-5 py-4 bg-white border-t" style={{ borderColor: '#fecaca' }}>
+                                                    <p className="text-sm text-slate-600 leading-relaxed">{t.body}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
                     </div>
+                </div>
+            </section>
 
-                    <div className="mt-12 space-y-4">
-                        {FAQS.map((faq, i) => {
+            {/* ══ SERVICES ══ */}
+            <section id="features" className="py-14 bg-slate-50">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-10">
+                        <h2 className="text-3xl font-black text-slate-900 mb-3" style={{ letterSpacing: '-0.02em' }}>Our Services</h2>
+                        <p className="text-slate-500 max-w-xl mx-auto">Enterprise-class solutions tailored for companies, schools and all growing organizations.</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {SERVICES.map((s, i) => (
+                            <div key={s.title} className="service-card au bg-white rounded-xl p-5 text-center shadow-sm border border-slate-100 cursor-default"
+                                 style={{ animationDelay: `${i * 0.07}s` }}>
+                                <div className="w-11 h-11 rounded-xl flex items-center justify-center mx-auto mb-3" style={{ background: '#fdf1f0' }}>
+                                    {s.icon('w-5 h-5 text-red-600')}
+                                </div>
+                                <h3 className="font-bold text-slate-800 text-sm mb-1.5">{s.title}</h3>
+                                <p className="text-xs text-slate-500 leading-relaxed">{s.desc}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ══ NOTICES + HIGHLIGHT ══ */}
+            <section className="py-14 bg-white">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div className="au">
+                            <div className="flex items-center justify-between mb-4 px-5 py-3 rounded-t-xl text-white font-bold text-sm" style={{ background: RED }}>
+                                <span className="flex items-center gap-2">{IcBell('w-4 h-4')} Latest Updates</span>
+                                <button className="text-xs text-red-100 hover:text-white font-semibold">View All →</button>
+                            </div>
+                            <div className="border border-t-0 border-slate-100 rounded-b-xl divide-y divide-slate-100 overflow-hidden">
+                                {NOTICES.map((n, i) => (
+                                    <div key={i} className="flex items-start gap-3 px-5 py-4 hover:bg-slate-50 transition-colors cursor-pointer">
+                                        <span className="w-1.5 h-1.5 rounded-full mt-2 shrink-0" style={{ background: RED }} />
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-slate-700 leading-snug">{n.title}</p>
+                                            <p className="text-xs text-slate-400 mt-0.5">{n.date}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                                <div className="px-5 py-3 text-center">
+                                    <button className="text-sm font-semibold hover:underline" style={{ color: RED }}>View All Updates →</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="au" style={{ animationDelay: '.1s' }}>
+                            <div className="flex items-center gap-2 mb-4 px-5 py-3 rounded-t-xl text-white font-bold text-sm" style={{ background: NAVY }}>
+                                {IcShield('w-4 h-4')} Why OrgSphere
+                            </div>
+                            <div className="border border-t-0 border-slate-100 rounded-b-xl p-6 space-y-5">
+                                {[
+                                    { icon: IcShield,   title: 'Secure by Default',    desc: 'JWT auth, role-based access, encrypted storage for every organization.' },
+                                    { icon: IcTrend,    title: 'Real-time Analytics',  desc: 'Auto-refreshing dashboards, charts and activity feeds.' },
+                                    { icon: IcUsers,    title: 'Multi-Portal System',  desc: 'Company portal + School portal — both under one account.' },
+                                    { icon: IcGrid,     title: 'Scales with You',      desc: 'Handles 10 to 10,000 users — no config changes needed.' },
+                                ].map(w => (
+                                    <div key={w.title} className="flex items-start gap-4">
+                                        <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#fdf1f0' }}>
+                                            {w.icon('w-5 h-5 text-red-600')}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-slate-800 text-sm mb-0.5">{w.title}</p>
+                                            <p className="text-xs text-slate-500 leading-relaxed">{w.desc}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            {/* ══ PRICING ══ */}
+            <section id="pricing" className="py-14 bg-slate-50">
+                <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-9">
+                        <h2 className="text-3xl font-black text-slate-900 mb-3" style={{ letterSpacing: '-0.02em' }}>Simple Pricing</h2>
+                        <p className="text-slate-500">Start free. No hidden fees. Cancel anytime.</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
+                        {PLANS.map((p, i) => (
+                            <div key={p.name} className={`au rounded-2xl p-5 flex flex-col transition-all hover:-translate-y-1 ${p.hot ? 'text-white shadow-xl' : 'bg-white border border-slate-100 shadow-sm hover:shadow-md'}`}
+                                 style={{ ...(p.hot ? { background: NAVY, boxShadow: '0 16px 40px rgba(26,43,60,0.3)' } : {}), animationDelay: `${i * 0.08}s` }}>
+                                {p.hot && <span className="self-start text-[10px] font-black px-2.5 py-0.5 rounded-full mb-2.5" style={{ background: RED, color: 'white' }}>Most Popular</span>}
+                                <p className={`text-xs font-bold uppercase tracking-wide mb-1 ${p.hot ? 'text-blue-300' : 'text-slate-500'}`}>{p.name}</p>
+                                <div className="flex items-end gap-1 mb-0.5">
+                                    <span className={`text-3xl font-black ${p.hot ? 'text-white' : 'text-slate-900'}`}>{p.price}</span>
+                                </div>
+                                <p className={`text-xs mb-4 ${p.hot ? 'text-blue-200' : 'text-slate-400'}`}>{p.sub}</p>
+                                <ul className="space-y-2 flex-1 mb-5">
+                                    {p.items.map(f => (
+                                        <li key={f} className="flex items-center gap-2 text-xs">
+                                            {IcCheck(`w-3.5 h-3.5 shrink-0 ${p.hot ? 'text-blue-300' : 'text-red-600'}`)}
+                                            <span className={p.hot ? 'text-blue-100' : 'text-slate-600'}>{f}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                                <button onClick={() => setRegOpen(true)}
+                                        className={`w-full py-2 rounded-md text-[11px] font-black transition-all hover:opacity-90 ${p.hot ? 'bg-white text-blue-900' : 'text-white'}`}
+                                        style={p.hot ? {} : { background: RED }}>
+                                    {p.cta}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* ══ FAQ ══ */}
+            <section className="py-14 bg-white">
+                <div className="max-w-3xl mx-auto px-4 sm:px-6">
+                    <div className="text-center mb-9">
+                        <h2 className="text-3xl font-black text-slate-900 mb-3" style={{ letterSpacing: '-0.02em' }}>Frequently Asked Questions</h2>
+                    </div>
+                    <div className="space-y-2">
+                        {FAQS.map((f, i) => {
                             const open = openFaq === i;
                             return (
-                                <div key={faq.q}
-                                     className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                                    <button
-                                        onClick={() => setOpenFaq(open ? -1 : i)}
-                                        className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
-                                        aria-expanded={open}
-                                    >
-                                        <span className="font-semibold">{faq.q}</span>
-                                        <ChevronDownIcon
-                                            className={`h-5 w-5 shrink-0 text-violet-600 transition-transform duration-300 ${open ? 'rotate-180' : ''}`}/>
+                                <div key={f.q} className="rounded-xl border overflow-hidden transition-all"
+                                     style={{ borderColor: open ? RED : '#e2e8f0' }}>
+                                    <button onClick={() => setOpenFaq(open ? -1 : i)}
+                                            className="flex w-full items-center justify-between px-5 py-4 text-left hover:bg-slate-50 transition-colors">
+                                        <span className="font-semibold text-slate-800 text-sm">{f.q}</span>
+                                        {IcChevron(`w-4 h-4 text-slate-400 transition-transform duration-300 shrink-0 ${open ? 'rotate-180' : ''}`)}
                                     </button>
-                                    <div
-                                        className={`grid transition-all duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                                    <div className={`grid transition-all duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
                                         <div className="overflow-hidden">
-                                            <p className="px-6 pb-5 leading-relaxed text-slate-600">{faq.a}</p>
+                                            <p className="px-5 pb-4 text-sm text-slate-500 leading-relaxed">{f.a}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -801,120 +604,142 @@ const HomePage = () => {
                 </div>
             </section>
 
-            {/* ============================ 10. FOOTER ========================== */}
-            <footer id="contact" className="bg-slate-950 text-slate-300">
-                <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:grid-cols-5">
-                        {/* Brand */}
-                        <div className="col-span-2 sm:col-span-3 lg:col-span-1">
-                            <Link to="/" className="flex items-center gap-2">
-                <span
-                    className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 text-white">
-                  <SparklesIcon className="h-5 w-5"/>
-                </span>
-                                <span className="text-xl font-extrabold text-white">OrgSphere</span>
-                            </Link>
-                            <p className="mt-4 text-sm text-slate-400">Manage smarter.</p>
-                            <div className="mt-5 flex gap-3">
-                                <a href="#contact"
-                                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-slate-300 transition-colors hover:bg-violet-600 hover:text-white"><LinkedinIcon
-                                    className="h-4 w-4"/></a>
-                                <a href="#contact"
-                                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-slate-300 transition-colors hover:bg-violet-600 hover:text-white"><TwitterIcon
-                                    className="h-4 w-4"/></a>
-                                <a href="#contact"
-                                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-slate-300 transition-colors hover:bg-violet-600 hover:text-white"><YoutubeIcon
-                                    className="h-4 w-4"/></a>
-                                <a href="#contact"
-                                   className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 text-slate-300 transition-colors hover:bg-violet-600 hover:text-white"><GithubIcon
-                                    className="h-4 w-4"/></a>
+            {/* ══ CTA BANNER (Reimagine) ══ */}
+            <section className="py-10" style={{ background: NAVY }}>
+                <div className="max-w-3xl mx-auto px-4 text-center">
+                    <h2 className="text-3xl sm:text-4xl font-black text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
+                        Reimagine Your <span style={{ color: RED }}>Organization</span>
+                    </h2>
+                    <p className="text-slate-300 mb-8">Join 500+ companies and schools using OrgSphere. Free 7-day trial, no card needed.</p>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                        <BtnPrimary onClick={() => setRegOpen(true)} className="px-6 py-3 text-xs">
+                            {IcArrow('w-4 h-4')} Get Started Free
+                        </BtnPrimary>
+                        <BtnBlue onClick={() => setRegOpen(true)} className="px-6 py-3 text-xs">
+                            Book a Demo
+                        </BtnBlue>
+                    </div>
+                </div>
+            </section>
+
+            {/* Red action strip */}
+            <div className="py-6 px-4" style={{ background: RED }}>
+                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <p className="text-white font-black text-lg text-center sm:text-left">
+                        A Fulfilling Future Awaits Your Organization
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-3">
+                        <button onClick={() => setRegOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold bg-white transition-all hover:opacity-90" style={{ color: RED }}>
+                            {IcArrow('w-4 h-4')} Get Started
+                        </button>
+                        <button onClick={() => setRegOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-xs font-bold text-white border-2 border-white/40 hover:bg-white/10 transition-all">
+                            Contact Sales
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* ══ FOOTER ══ */}
+            <footer id="contact" style={{ background: NAVY }}>
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-14">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-10">
+                        <div className="lg:col-span-2">
+                            <div className="flex items-center gap-2.5 mb-4">
+                                <div className="w-9 h-9 flex items-center justify-center" style={{ background: RED }}>
+                                    <svg className="w-5 h-5 text-white fill-white" viewBox="0 0 24 24">
+                                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                    </svg>
+                                </div>
+                                <span className="font-bold text-lg text-white">OrgSphere</span>
+                            </div>
+                            <p className="text-sm text-slate-400 leading-relaxed mb-5 max-w-xs">
+                                Complete management platform for companies and schools. Manage smarter, grow faster.
+                            </p>
+                            <div className="space-y-2">
+                                <a href="mailto:abhishekrathore7417@gmail.com" className="flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
+                                    {IcMail('w-3.5 h-3.5')} abhishekrathore7417@gmail.com
+                                </a>
+                                <a href="tel:7417015597" className="flex items-center gap-2 text-sm text-slate-400 hover:text-red-400 transition-colors">
+                                    {IcPhone('w-3.5 h-3.5')} +91 7417015597
+                                </a>
+                            </div>
+                            <div className="flex gap-2 mt-5">
+                                {[IcLinkedin, IcTwitter, IcGithub].map((ic, i) => (
+                                    <a key={i} href="#contact" className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-800 hover:bg-red-600 text-slate-400 hover:text-white transition-all">
+                                        {ic('w-4 h-4')}
+                                    </a>
+                                ))}
                             </div>
                         </div>
-
-                        {FOOTER_COLS.map((col) => (
+                        {FOOTER_COLS.map(col => (
                             <div key={col.title}>
-                                <h4 className="text-sm font-bold text-white">{col.title}</h4>
-                                <ul className="mt-4 space-y-3">
-                                    {col.links.map((link) => (
-                                        <li key={link}>
-                                            <a href="#contact"
-                                               className="text-sm text-slate-400 transition-colors hover:text-violet-400">
-                                                {link}
-                                            </a>
-                                        </li>
+                                <p className="text-sm font-bold mb-4" style={{ color: '#fb9d97' }}>{col.title}</p>
+                                <ul className="space-y-2.5">
+                                    {col.links.map(l => (
+                                        <li key={l}><a href="#contact" className="text-sm text-slate-400 hover:text-red-400 transition-colors">{l}</a></li>
                                     ))}
                                 </ul>
                             </div>
                         ))}
-
-                        {/* Contact col */}
-                        <div>
-                            <h4 className="text-sm font-bold text-white">Contact</h4>
-                            <ul className="mt-4 space-y-3 text-sm text-slate-400">
-                                <li className="flex items-center gap-2"><MailIcon
-                                    className="h-4 w-4"/> hello@orgsphere.com
-                                </li>
-                                <li className="flex items-center gap-2"><AwardIcon className="h-4 w-4"/> ISO 27001
-                                    Certified
-                                </li>
-                                <li className="flex items-center gap-2"><ClipboardListIcon className="h-4 w-4"/> GDPR
-                                    Compliant
-                                </li>
-                            </ul>
-                        </div>
                     </div>
-
-                    <div className="mt-12 border-t border-slate-800 pt-8 text-center text-sm text-slate-500">
-                        © 2026 OrgSphere. All rights reserved. Made with{' '}
-                        <span className="text-rose-500">❤</span> for companies &amp; schools.
+                </div>
+                <div className="border-t py-5" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+                        <p className="text-xs text-slate-500">© 2026 OrgSphere. All rights reserved. Made for companies &amp; schools.</p>
+                        <div className="flex gap-4 text-xs text-slate-500">
+                            <a href="#contact" className="hover:text-slate-300 transition-colors">Privacy Policy</a>
+                            <a href="#contact" className="hover:text-slate-300 transition-colors">Terms of Service</a>
+                        </div>
                     </div>
                 </div>
             </footer>
 
-            {/* Register Modal */}
-            {registerOpen && (
+            {/* ══ REGISTER MODAL ══ */}
+            {regOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                         onClick={() => setRegisterOpen(false)}/>
-                    <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-7">
-                        <h3 className="text-lg font-bold text-slate-800 mb-1">Create your account</h3>
-                        <p className="text-sm text-slate-500 mb-6">Choose your organisation type to register.</p>
-                        <button
-                            onClick={() => {
-                                navigate('/register/company');
-                                setRegisterOpen(false);
-                            }}
-                            className="w-full flex items-center gap-4 border border-slate-200 rounded-xl p-4 mb-3 hover:border-violet-500 hover:bg-violet-50 transition-all text-left group"
-                        >
-                <span
-                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all shrink-0">
-                  <BuildingIcon className="h-5 w-5"/>
-                </span>
-                            <div>
-                                <p className="font-semibold text-slate-800 text-sm">Register as Company</p>
-                                <p className="text-xs text-slate-500">Employees, departments, payroll</p>
+                    <div className="absolute inset-0 bg-black/60" onClick={() => setRegOpen(false)} />
+                    <div className="relative bg-white w-full max-w-sm p-8" style={{ borderTop: `4px solid ${RED}` }}>
+                        <button onClick={() => setRegOpen(false)}
+                                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center transition-colors hover:bg-slate-50">
+                            {IcClose('w-4 h-4')}
+                        </button>
+                        <div className="mb-7">
+                            <div className="w-11 h-11 flex items-center justify-center mb-4" style={{ background: NAVY }}>
+                                <svg className="w-5 h-5 text-white fill-white" viewBox="0 0 24 24">
+                                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                                </svg>
                             </div>
-                        </button>
-                        <button
-                            onClick={() => {
-                                navigate('/register/school');
-                                setRegisterOpen(false);
-                            }}
-                            className="w-full flex items-center gap-4 border border-slate-200 rounded-xl p-4 hover:border-violet-500 hover:bg-violet-50 transition-all text-left group"
-                        >
-                <span
-                    className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600 group-hover:bg-violet-600 group-hover:text-white transition-all shrink-0">
-                  <GraduationCapIcon className="h-5 w-5"/>
-                </span>
-                            <div>
-                                <p className="font-semibold text-slate-800 text-sm">Register as School</p>
-                                <p className="text-xs text-slate-500">Students, classrooms, fees</p>
+                            <h3 className="font-semibold text-lg" style={{ color: NAVY }}>Create your account</h3>
+                            <p className="text-sm mt-1 text-slate-500">Select your organisation type</p>
+                        </div>
+                        <button onClick={() => { navigate('/register/company'); setRegOpen(false); }}
+                                className="w-full flex items-center gap-4 p-4 border-2 hover:bg-slate-50 transition-all text-left group mb-3"
+                                style={{ borderColor: '#e4e0d6' }}>
+                            <span className="w-10 h-10 flex items-center justify-center shrink-0" style={{ background: '#f7f5f0', color: NAVY }}>
+                                {IcBuilding('w-5 h-5')}
+                            </span>
+                            <div className="flex-1">
+                                <p className="font-bold text-sm" style={{ color: NAVY }}>Register as Company</p>
+                                <p className="text-xs mt-0.5 text-slate-400">Employees, departments, payroll</p>
                             </div>
+                            {IcArrow('w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform')}
                         </button>
-                        <button onClick={() => setRegisterOpen(false)}
-                                className="mt-4 w-full text-sm text-slate-400 hover:text-slate-600">
-                            Cancel
+                        <button onClick={() => { navigate('/register/school'); setRegOpen(false); }}
+                                className="w-full flex items-center gap-4 p-4 border-2 hover:bg-slate-50 transition-all text-left group"
+                                style={{ borderColor: '#e4e0d6' }}>
+                            <span className="w-10 h-10 flex items-center justify-center shrink-0" style={{ background: '#f7f5f0', color: RED }}>
+                                {IcGrad('w-5 h-5')}
+                            </span>
+                            <div className="flex-1">
+                                <p className="font-bold text-sm" style={{ color: NAVY }}>Register as School</p>
+                                <p className="text-xs mt-0.5 text-slate-400">Students, classrooms, fees</p>
+                            </div>
+                            {IcArrow('w-4 h-4 text-slate-300 group-hover:translate-x-1 transition-transform')}
                         </button>
+                        <p className="text-center text-sm mt-5 text-slate-500">
+                            Already have an account?{' '}
+                            <Link to="/login" onClick={() => setRegOpen(false)} className="font-bold hover:underline" style={{ color: RED_D }}>Sign In</Link>
+                        </p>
                     </div>
                 </div>
             )}
