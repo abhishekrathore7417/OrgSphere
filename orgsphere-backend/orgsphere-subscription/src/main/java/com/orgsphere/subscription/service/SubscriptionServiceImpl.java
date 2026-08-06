@@ -8,6 +8,7 @@ import com.orgsphere.subscription.dto.SubscriptionRequest;
 import com.orgsphere.subscription.dto.SubscriptionResponse;
 import com.orgsphere.subscription.entity.Subscription;
 import com.orgsphere.subscription.repository.SubscriptionRepository;
+import com.orgsphere.subscription.util.PlanUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,18 +53,21 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Organization organization = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
+        String planName = request.getPlanName().toUpperCase();
+        LocalDate today = LocalDate.now();
+
+        // Agar subscription pehle se nahi hai (naya registration), to naya bana denge
         Subscription subscription = subscriptionRepository.findByOrganization(organization)
-                .orElseThrow(() -> new ResourceNotFoundException("Subscription not found"));
+                .orElse(Subscription.builder().organization(organization).build());
 
-        // Update subscription
-        subscription.setPlanName(request.getPlanName());
-        subscription.setAmount(request.getAmount());
-        subscription.setStartDate(LocalDate.now());
-        subscription.setEndDate(LocalDate.now().plusYears(1));
-        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscription.setPlanName(planName);
+        subscription.setAmount(PlanUtil.getAmount(planName));   // ⚠️ client ka amount ignore, server decide karta hai
+        subscription.setStartDate(today);
+        subscription.setEndDate(PlanUtil.getEndDate(planName, today));
+        subscription.setStatus(PlanUtil.getInitialStatus(planName));
 
-        Subscription updated = subscriptionRepository.save(subscription);
-        return mapToResponse(updated);
+        Subscription saved = subscriptionRepository.save(subscription);
+        return mapToResponse(saved);
     }
 
     @Override
@@ -71,9 +75,12 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = subscriptionRepository.findById(subscriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found"));
 
-        subscription.setStartDate(LocalDate.now());
-        subscription.setEndDate(LocalDate.now().plusYears(1));
-        subscription.setStatus(SubscriptionStatus.ACTIVE);
+        String planName = subscription.getPlanName().toUpperCase();
+        LocalDate today = LocalDate.now();
+
+        subscription.setStartDate(today);
+        subscription.setEndDate(PlanUtil.getEndDate(planName, today));
+        subscription.setStatus(PlanUtil.getInitialStatus(planName));
 
         Subscription renewed = subscriptionRepository.save(subscription);
         return mapToResponse(renewed);

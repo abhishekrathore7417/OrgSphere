@@ -1,7 +1,6 @@
 package com.orgsphere.payment.service;
 
-import com.orgsphere.payment.dto.PaymentRequest;
-import com.orgsphere.payment.dto.PaymentResponse;
+import com.orgsphere.payment.dto.*;
 
 import java.util.List;
 
@@ -16,4 +15,8 @@ public interface PaymentService {
     List<PaymentResponse> getPaymentsByUser(Long userId);
 
     List<PaymentResponse> getAllPayments();
+
+    CreateOrderResponse createOrder(CreateOrderRequest request);
+
+    PaymentResponse verifyPayment(VerifyPaymentRequest request);
 }
