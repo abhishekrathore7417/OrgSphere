@@ -28,4 +28,5 @@ public class StudentResponse {
     private String userEmail;
     private Long organizationId;
     private String organizationName;
+    private String optionalFeeTypes;
 }

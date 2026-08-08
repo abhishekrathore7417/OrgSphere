@@ -45,6 +45,9 @@ public class Student extends BaseEntity {
     @Column(nullable = false)
     private StudentStatus status;
 
+    @Column(name = "optional_fee_types")
+    private String optionalFeeTypes; // Comma-separated list of fee types (e.g., LIBRARY,SPORTS)
+
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false, unique = true)
     private User user;

@@ -50,6 +50,7 @@ public class StudentServiceImpl implements StudentService {
                 .guardianName(request.getGuardianName())
                 .guardianContact(request.getGuardianContact())
                 .guardianEmail(request.getGuardianEmail())
+                .optionalFeeTypes(request.getOptionalFeeTypes())
                 .status(request.getStatus() != null ?
                         StudentStatus.valueOf(request.getStatus().toUpperCase()) :
                         StudentStatus.ACTIVE)
@@ -96,6 +97,7 @@ public class StudentServiceImpl implements StudentService {
         student.setGuardianName(request.getGuardianName());
         student.setGuardianContact(request.getGuardianContact());
         student.setGuardianEmail(request.getGuardianEmail());
+        student.setOptionalFeeTypes(request.getOptionalFeeTypes());
 
         if (request.getStatus() != null) {
             student.setStatus(StudentStatus.valueOf(request.getStatus().toUpperCase()));
@@ -165,6 +167,7 @@ public class StudentServiceImpl implements StudentService {
                 .guardianName(student.getGuardianName())
                 .guardianContact(student.getGuardianContact())
                 .guardianEmail(student.getGuardianEmail())
+                .optionalFeeTypes(student.getOptionalFeeTypes())
                 .status(student.getStatus().name())
                 .userId(student.getUser().getId())
                 .userFullName(student.getUser().getFullName())

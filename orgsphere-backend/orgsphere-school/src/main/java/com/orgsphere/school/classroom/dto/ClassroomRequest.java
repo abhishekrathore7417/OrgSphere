@@ -21,6 +21,8 @@ public class ClassroomRequest {
 
     private String section;
 
+    private String session;
+
     private Integer capacity;
 
     private String classTeacher;

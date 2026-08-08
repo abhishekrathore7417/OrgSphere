@@ -43,6 +43,7 @@ public class ClassroomServiceImpl implements ClassroomService {
                 .classroomName(request.getClassroomName())
                 .classCode(request.getClassCode())
                 .section(request.getSection())
+                .session(request.getSession())
                 .capacity(request.getCapacity())
                 .classTeacher(request.getClassTeacher())
                 .classTeacherId(request.getClassTeacherId())
@@ -84,6 +85,7 @@ public class ClassroomServiceImpl implements ClassroomService {
 
         classroom.setClassroomName(request.getClassroomName());
         classroom.setSection(request.getSection());
+        classroom.setSession(request.getSession());
         classroom.setCapacity(request.getCapacity());
         classroom.setClassTeacher(request.getClassTeacher());
         classroom.setClassTeacherId(request.getClassTeacherId());
@@ -137,6 +139,7 @@ public class ClassroomServiceImpl implements ClassroomService {
                 .classroomName(classroom.getClassroomName())
                 .classCode(classroom.getClassCode())
                 .section(classroom.getSection())
+                .session(classroom.getSession())
                 .capacity(classroom.getCapacity())
                 .classTeacher(classroom.getClassTeacher())
                 .classTeacherId(classroom.getClassTeacherId())

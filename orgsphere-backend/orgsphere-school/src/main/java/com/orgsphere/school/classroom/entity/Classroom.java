@@ -23,6 +23,9 @@ public class Classroom extends BaseEntity {
 
     private String section;  // A, B, C
 
+    @Column(name = "session")
+    private String session;  // e.g. 2025-26
+
     private Integer capacity;  // Maximum students
 
     @Column(name = "class_teacher")

@@ -5,6 +5,8 @@ import com.orgsphere.organization.entity.Organization;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.orgsphere.common.enums.DepartmentStatus;
+
 @Entity
 @Table(name = "departments")
 @Getter
@@ -18,6 +20,13 @@ public class Department extends BaseEntity {
     private String departmentName;
 
     private String description;
+
+    @Column(name = "session")
+    private String session;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private DepartmentStatus status = DepartmentStatus.ACTIVE;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organization_id", nullable = false)

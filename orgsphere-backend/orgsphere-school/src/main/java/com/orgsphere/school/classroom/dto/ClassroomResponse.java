@@ -15,6 +15,7 @@ public class ClassroomResponse {
     private String classroomName;
     private String classCode;
     private String section;
+    private String session;
     private Integer capacity;
     private String classTeacher;
     private Long classTeacherId;
