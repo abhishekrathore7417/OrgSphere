@@ -6,6 +6,7 @@ import com.orgsphere.organization.entity.Organization;
 import com.orgsphere.organization.repository.OrganizationRepository;
 import com.orgsphere.subscription.dto.SubscriptionRequest;
 import com.orgsphere.subscription.dto.SubscriptionResponse;
+import com.orgsphere.subscription.entity.QueuedPlan;
 import com.orgsphere.subscription.entity.Subscription;
 import com.orgsphere.subscription.repository.SubscriptionRepository;
 import com.orgsphere.subscription.util.PlanUtil;
@@ -32,6 +33,25 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         Subscription subscription = subscriptionRepository.findByOrganization(organization)
                 .orElseThrow(() -> new ResourceNotFoundException("Subscription not found for organization"));
+
+        LocalDate today = LocalDate.now();
+        if (subscription.getEndDate() != null && subscription.getEndDate().isBefore(today)) {
+            boolean changed = false;
+            while (!subscription.getQueuedPlans().isEmpty()) {
+                QueuedPlan nextPlan = subscription.getQueuedPlans().remove(0);
+                subscription.setPlanName(nextPlan.getPlanName());
+                subscription.setStartDate(nextPlan.getStartDate() != null ? nextPlan.getStartDate() : today);
+                subscription.setEndDate(nextPlan.getEndDate());
+                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                changed = true;
+                if (!subscription.getEndDate().isBefore(today)) {
+                    break;
+                }
+            }
+            if (changed) {
+                subscription = subscriptionRepository.save(subscription);
+            }
+        }
 
         return mapToResponse(subscription);
     }
@@ -60,11 +80,33 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         Subscription subscription = subscriptionRepository.findByOrganization(organization)
                 .orElse(Subscription.builder().organization(organization).build());
 
-        subscription.setPlanName(planName);
-        subscription.setAmount(PlanUtil.getAmount(planName));   // ⚠️ client ka amount ignore, server decide karta hai
-        subscription.setStartDate(today);
-        subscription.setEndDate(PlanUtil.getEndDate(planName, today));
-        subscription.setStatus(PlanUtil.getInitialStatus(planName));
+        LocalDate baseDate = subscription.getEndDate() != null && subscription.getEndDate().isAfter(today) 
+                ? subscription.getEndDate() : today;
+
+        if (baseDate.isAfter(today)) {
+            // Queue the plan
+            LocalDate start = baseDate;
+            if (subscription.getQueuedPlans() != null && !subscription.getQueuedPlans().isEmpty()) {
+                start = subscription.getQueuedPlans().get(subscription.getQueuedPlans().size() - 1).getEndDate();
+            }
+            subscription.getQueuedPlans().add(QueuedPlan.builder()
+                    .planName(planName)
+                    .startDate(start)
+                    .endDate(PlanUtil.getEndDate(planName, start))
+                    .build());
+        } else {
+            // Start immediately
+            subscription.setPlanName(planName);
+            subscription.setAmount(PlanUtil.getAmount(planName));   // ⚠️ client ka amount ignore, server decide karta hai
+            subscription.setStartDate(today);
+            subscription.setEndDate(PlanUtil.getEndDate(planName, today));
+            subscription.setStatus(PlanUtil.getInitialStatus(planName));
+            
+            // Clear any old queue
+            if (subscription.getQueuedPlans() != null) {
+                subscription.getQueuedPlans().clear();
+            }
+        }
 
         Subscription saved = subscriptionRepository.save(subscription);
         return mapToResponse(saved);
@@ -78,9 +120,30 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         String planName = subscription.getPlanName().toUpperCase();
         LocalDate today = LocalDate.now();
 
-        subscription.setStartDate(today);
-        subscription.setEndDate(PlanUtil.getEndDate(planName, today));
-        subscription.setStatus(PlanUtil.getInitialStatus(planName));
+        LocalDate baseDate = subscription.getEndDate() != null && subscription.getEndDate().isAfter(today) 
+                ? subscription.getEndDate() : today;
+
+        if (baseDate.isAfter(today)) {
+            // Queue the plan
+            LocalDate start = baseDate;
+            if (subscription.getQueuedPlans() != null && !subscription.getQueuedPlans().isEmpty()) {
+                start = subscription.getQueuedPlans().get(subscription.getQueuedPlans().size() - 1).getEndDate();
+            }
+            subscription.getQueuedPlans().add(QueuedPlan.builder()
+                    .planName(planName)
+                    .startDate(start)
+                    .endDate(PlanUtil.getEndDate(planName, start))
+                    .build());
+        } else {
+            subscription.setStartDate(today);
+            subscription.setEndDate(PlanUtil.getEndDate(planName, today));
+            subscription.setStatus(PlanUtil.getInitialStatus(planName));
+            
+            // Clear any old queue
+            if (subscription.getQueuedPlans() != null) {
+                subscription.getQueuedPlans().clear();
+            }
+        }
 
         Subscription renewed = subscriptionRepository.save(subscription);
         return mapToResponse(renewed);
@@ -98,8 +161,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public boolean isSubscriptionActive(Long organizationId) {
         try {
             SubscriptionResponse response = getSubscriptionStatus(organizationId);
-            return response.getStatus().equals(SubscriptionStatus.ACTIVE.name())
-                    && response.getEndDate().isAfter(LocalDate.now());
+            String status = response.getStatus();
+            boolean notExpired = !response.getEndDate().isBefore(LocalDate.now());
+            return (status.equals(SubscriptionStatus.ACTIVE.name()) || status.equals(SubscriptionStatus.TRIAL.name())) && notExpired;
         } catch (Exception e) {
             return false;
         }
@@ -119,6 +183,7 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .status(subscription.getStatus().name())
                 .organizationId(org.getId())
                 .organizationName(org.getOrganizationName())
+                .queuedPlans(subscription.getQueuedPlans())
                 .build();
     }
 }

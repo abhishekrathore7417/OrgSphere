@@ -7,6 +7,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "subscriptions")
@@ -32,6 +34,11 @@ public class Subscription extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private SubscriptionStatus status;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "subscription_queue", joinColumns = @JoinColumn(name = "subscription_id"))
+    @OrderBy("startDate ASC")
+    private List<QueuedPlan> queuedPlans = new ArrayList<>();
 
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "organization_id", nullable = false, unique = true)

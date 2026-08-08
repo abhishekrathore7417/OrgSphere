@@ -300,15 +300,11 @@ const HomePage = () => {
     return (
         <div className="min-h-screen bg-white text-slate-900 antialiased" style={{ fontFamily: "'Segoe UI','Inter',Arial,sans-serif" }}>
             <style>{`
-                @keyframes ticker { 0%{transform:translateX(100%)} 100%{transform:translateX(-100%)} }
-                @keyframes tickerGap {
-                    0%   { transform: translateX(100%); }
-                    55%  { transform: translateX(-100%); }
-                    100% { transform: translateX(-100%); }
-                }
+                @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+                @keyframes tickerUpdates { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
                 @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-                .ticker-track { animation: ticker 45s linear infinite; display: flex; gap: 60px; white-space: nowrap; }
-                .ticker-track-gap { animation: tickerGap 250s linear infinite; display: flex; gap: 60px; white-space: nowrap; }
+                .ticker-track { animation: ticker 35s linear infinite; display: flex; gap: 60px; white-space: nowrap; }
+                .ticker-track-gap { animation: tickerUpdates 55s linear infinite; display: flex; gap: 80px; white-space: nowrap; }
                 .au { animation: fadeUp .55s ease both }
                 html { scroll-behavior: smooth }
                 .nav-link { position:relative; font-size:14px; font-weight:500; color:#1e293b; transition:color .2s; padding:4px 0; }
@@ -424,7 +420,7 @@ const HomePage = () => {
                         </div>
                         <div className="overflow-hidden flex-1 flex items-center py-1.5">
                             <div className="ticker-track-gap text-[11px] text-slate-200 font-semibold">
-                                {[...TICKERS, ...TICKERS].map((t, i) => (
+                                {[...TICKERS, ...TICKERS, ...TICKERS, ...TICKERS].map((t, i) => (
                                     <TickerItem key={i} t={t} />
                                 ))}
                             </div>
@@ -435,7 +431,6 @@ const HomePage = () => {
 
             {/* ══ HERO ══ */}
             <section id="home" className="relative overflow-hidden" style={{ background: NAVY, minHeight: '560px' }}>
-                <div className="watermark">org</div>
                 <div className="absolute inset-0 opacity-[0.04]"
                      style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,.8) 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
 

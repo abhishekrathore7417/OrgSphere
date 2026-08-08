@@ -7,6 +7,7 @@ import { userApi } from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
+import { ViewToggle, useViewMode } from '../../components/common/ViewToggle';
 
 const buildNav = (deptName) => [
     { path: '/company/dashboard',                                              label: 'Dashboard',   icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
@@ -46,6 +47,7 @@ const Employees = () => {
     const [modal, setModal]         = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm]           = useState({ ...EMPTY, department: decoded });
+    const [viewMode, setViewMode]   = useViewMode('list', 'employees_view');
 
     useEffect(() => { load(); }, [deptName]);
 
@@ -154,10 +156,13 @@ const Employees = () => {
                         <h2 className="text-lg font-semibold text-gray-800">Employees — {decoded}</h2>
                         <p className="text-sm text-gray-400 mt-0.5">Manage employees in this department</p>
                     </div>
-                    <button onClick={openAdd} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                        Add Employee
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <ViewToggle viewMode={viewMode} onChange={setViewMode} />
+                        <button onClick={openAdd} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                            Add Employee
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -166,6 +171,36 @@ const Employees = () => {
                     <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
                         <p className="text-sm font-medium text-gray-700">No employees in {decoded}</p>
                         <p className="text-xs text-gray-400 mt-1">Click "Add Employee" to get started</p>
+                    </div>
+                ) : viewMode === 'grid' ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {employees.map(emp => (
+                            <div key={emp.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-700 font-bold text-sm shrink-0">
+                                        {emp.userFullName?.charAt(0)?.toUpperCase() || 'E'}
+                                    </div>
+                                    <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS[emp.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{emp.status}</span>
+                                </div>
+                                <h3 className="text-sm font-bold text-gray-800 truncate">{emp.userFullName}</h3>
+                                <p className="text-xs text-gray-400 truncate">{emp.userEmail}</p>
+                                <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">ID</span>
+                                        <span className="font-semibold text-gray-700">{emp.employeeId}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Role</span>
+                                        <span className="font-semibold text-gray-700">{emp.designation || '—'}</span>
+                                    </div>
+                                    <div className="flex justify-between text-xs">
+                                        <span className="text-gray-400">Salary</span>
+                                        <span className="font-semibold text-gray-700">{emp.salary ? `₹${emp.salary}` : '—'}</span>
+                                    </div>
+                                </div>
+                                <button onClick={() => openEdit(emp)} className="mt-3 w-full text-xs text-center text-violet-600 font-semibold hover:underline">Edit</button>
+                            </div>
+                        ))}
                     </div>
                 ) : (
                     <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">

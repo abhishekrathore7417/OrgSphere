@@ -1,11 +1,13 @@
 package com.orgsphere.subscription.dto;
 
+import com.orgsphere.subscription.entity.QueuedPlan;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
 @Builder
@@ -20,4 +22,6 @@ public class SubscriptionResponse {
     private String status;
     private Long organizationId;
     private String organizationName;
+
+    private List<QueuedPlan> queuedPlans;
 }

@@ -7,6 +7,7 @@ import {userApi} from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
 import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
+import { ViewToggle, useViewMode } from '../../components/common/ViewToggle';
 
 const buildNav = (deptName) => [
     {
@@ -103,6 +104,7 @@ const Teachers = () => {
     const [modal, setModal] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(EMPTY);
+    const [viewMode, setViewMode] = useViewMode('list', 'teachers_view');
 
     useEffect(() => {
         load();
@@ -221,14 +223,14 @@ const Teachers = () => {
                 <div className="flex items-center justify-between mb-6">
                     <div><h2 className="text-lg font-semibold text-gray-800">Teachers — {decoded}</h2><p
                         className="text-sm text-gray-400 mt-0.5">Manage teacher profiles</p></div>
-                    <button onClick={openAdd}
-                            className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24"
-                             stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Add Teacher
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <ViewToggle viewMode={viewMode} onChange={setViewMode} />
+                        <button onClick={openAdd}
+                                className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+                            Add Teacher
+                        </button>
+                    </div>
                 </div>
                 {loading ? <div className="flex justify-center h-60 items-center">
                         <div
@@ -238,7 +240,37 @@ const Teachers = () => {
                         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center"><p
                             className="text-sm font-medium text-gray-700">No teachers yet</p><p
                             className="text-xs text-gray-400 mt-1">Click "Add Teacher" to get started</p></div>
-                        : (
+                        : viewMode === 'grid' ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                {teachers.map(t => (
+                                    <div key={t.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0">
+                                                {t.userFullName?.charAt(0)?.toUpperCase() || 'T'}
+                                            </div>
+                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[t.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{t.status}</span>
+                                        </div>
+                                        <h3 className="text-sm font-bold text-gray-800 truncate">{t.userFullName}</h3>
+                                        <p className="text-xs text-gray-400 truncate">{t.userEmail}</p>
+                                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-gray-400">Subject</span>
+                                                <span className="font-semibold text-gray-700">{t.specialization || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-gray-400">Qualification</span>
+                                                <span className="font-semibold text-gray-700">{t.qualification || '—'}</span>
+                                            </div>
+                                            <div className="flex justify-between text-xs">
+                                                <span className="text-gray-400">Experience</span>
+                                                <span className="font-semibold text-gray-700">{t.experienceYears ? `${t.experienceYears} yrs` : '—'}</span>
+                                            </div>
+                                        </div>
+                                        <button onClick={() => openEdit(t)} className="mt-3 w-full text-xs text-center text-violet-600 font-semibold hover:underline">Edit</button>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
                             <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
                                 <table className="w-full">
                                     <thead>

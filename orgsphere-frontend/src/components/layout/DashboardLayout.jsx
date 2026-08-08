@@ -78,30 +78,35 @@ const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, active
 
     return (
         <div>
-            {/* Group header — click navigates to list page AND toggles expand */}
-            <button
-                onClick={() => {
-                    navigate(item.path);
-                    setOpen(o => !o);
-                }}
-                className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${
+            {/* Group header */}
+            <div
+                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-colors duration-150 ${
                     isInsideGroup
                         ? 'bg-violet-50 text-violet-700 font-semibold'
                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
                 }`}
             >
-                <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isInsideGroup ? 'text-violet-600' : 'text-gray-400'}`}>
-                    {item.icon}
-                </span>
+                <div 
+                    className="flex items-center gap-3 flex-1 cursor-pointer truncate py-0.5"
+                    onClick={() => {
+                        navigate(item.path);
+                        if (!open) setOpen(true);
+                    }}
+                >
+                    <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isInsideGroup ? 'text-violet-600' : 'text-gray-400'}`}>
+                        {item.icon}
+                    </span>
+                    {sidebarOpen && <span className="truncate text-left">{item.label}</span>}
+                </div>
                 {sidebarOpen && (
-                    <>
-                        <span className="flex-1 truncate text-left">{item.label}</span>
-                        <span className={`shrink-0 ${isInsideGroup ? 'text-violet-500' : 'text-gray-300'}`}>
-                            {open ? <ChevronDown /> : <ChevronRight />}
-                        </span>
-                    </>
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+                        className={`shrink-0 p-1 rounded-md hover:bg-gray-200 transition-colors ${isInsideGroup ? 'text-violet-500 hover:bg-violet-100' : 'text-gray-400'}`}
+                    >
+                        {open ? <ChevronDown /> : <ChevronRight />}
+                    </button>
                 )}
-            </button>
+            </div>
 
             {/* Children list */}
             {open && sidebarOpen && (

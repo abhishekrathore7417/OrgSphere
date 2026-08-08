@@ -46,6 +46,7 @@ const openRazorpay = (orderData, userData) => {
                 name:    userData.fullName,
                 email:   userData.email,
                 contact: userData.contactNumber,
+                method:  'upi',
             },
             theme: { color: RED },
             handler: async (response) => {
