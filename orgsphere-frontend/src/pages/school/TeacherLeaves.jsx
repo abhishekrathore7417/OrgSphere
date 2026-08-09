@@ -114,8 +114,10 @@ const TeacherLeaves = () => {
                                         <td className="px-4 py-3.5 text-sm text-gray-500">{l.endDate}</td>
                                         <td className="px-4 py-3.5 text-sm text-gray-500 max-w-32 truncate">{l.reason||'—'}</td>
                                         <td className="px-4 py-3.5"><span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[l.status]||'bg-gray-50 text-gray-500 border-gray-100'}`}>{l.status}</span></td>
-                                        <td className="px-4 py-3.5"><div className="flex gap-2">
-                                            <button onClick={()=>openEdit(l)} className="text-xs text-violet-500 font-medium">Edit</button>
+                                        <td className="px-4 py-3.5"><div className="flex items-center gap-2">
+                                            <button onClick={()=>openEdit(l)} title="Edit" className="w-6 h-6 flex items-center justify-center rounded-lg hover:bg-violet-50 text-gray-400 hover:text-violet-600 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            </button>
                                             {l.status==='PENDING' && <><button onClick={()=>approve(l.id)} className="text-xs text-green-600 font-medium">Approve</button><button onClick={()=>reject(l.id)} className="text-xs text-red-500 font-medium">Reject</button></>}
                                         </div></td>
                                     </tr>

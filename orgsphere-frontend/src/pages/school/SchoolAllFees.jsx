@@ -6,6 +6,19 @@ import { schoolApi } from '../../api/schoolApi';
 import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
+const FREQ_LABEL = { MONTHLY: 'Monthly', QUARTERLY: 'Quarterly', YEARLY: 'Yearly', ONE_TIME: 'One Time' };
+const TYPE_LABEL = { SCHOOL: 'School Fee', TRANSPORT: 'Transport Fee', EXAM: 'Exam Fee', LIBRARY: 'Library Fee', SPORTS: 'Sports Fee', OTHER: 'Other' };
+
+function computeDueDate(frequency, dueDay, refDate = new Date()) {
+    const d = parseInt(dueDay, 10) || 10;
+    const now = new Date(refDate);
+    if (frequency === 'MONTHLY') return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+    if (frequency === 'QUARTERLY') { const q = Math.floor(now.getMonth() / 3) * 3; return `${now.getFullYear()}-${String(q + 3).padStart(2, '0')}-${String(d).padStart(2, '0')}`; }
+    if (frequency === 'YEARLY') return `${now.getFullYear()}-12-${String(d).padStart(2, '0')}`;
+    const ot = new Date(); ot.setDate(ot.getDate() + 30); return ot.toISOString().split('T')[0];
+}
+
+
 const STATUS_STYLE = {
     PENDING:  'bg-amber-50 text-amber-600 border-amber-100',
     PAID:     'bg-green-50 text-green-700 border-green-100',
@@ -21,51 +34,100 @@ const SchoolAllFees = () => {
     const orgId    = rawOrgId || (lsOrgId && lsOrgId !== 'null' ? parseInt(lsOrgId, 10) : null);
     const navigate = useNavigate();
 
-    const [fees,       setFees]       = useState([]);
-    const [classrooms, setClassrooms] = useState([]);
-    const [students,   setStudents]   = useState([]);
-    const [loading,    setLoading]    = useState(true);
-    const [filter,     setFilter]     = useState('ALL');
-    const [search,     setSearch]     = useState('');
-    const [paying,     setPaying]     = useState(null);  // feeId being paid
-    const [payAmount,  setPayAmount]  = useState('');
-    const [payModal,   setPayModal]   = useState(false);
+    const [fees,        setFees]        = useState([]);
+    const [classrooms,  setClassrooms]  = useState([]);
+    const [students,    setStudents]    = useState([]);
+    const [structures,  setStructures]  = useState([]);
+    const [loading,     setLoading]     = useState(true);
+    const [filter,      setFilter]      = useState('ALL');
+    const [search,      setSearch]      = useState('');
+    const [paying,      setPaying]      = useState(null);
+    const [payAmount,   setPayAmount]   = useState('');
+    const [payModal,    setPayModal]    = useState(false);
+    const [genModal,    setGenModal]    = useState(false);
+    const [generating,  setGenerating]  = useState(false);
+    const [genResult,   setGenResult]   = useState(null);
+    const [genMonth,    setGenMonth]    = useState(() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}`; });
 
     useEffect(() => { load(); }, []);
 
     const load = async () => {
         setLoading(true);
         try {
-            const [feeRes, clsRes, stuRes] = await Promise.allSettled([
+            const [feeRes, clsRes, stuRes, strRes] = await Promise.allSettled([
                 schoolApi.getFeesByOrganization(orgId),
                 schoolApi.getClassroomsByOrganization(orgId),
                 schoolApi.getStudentsByOrganization(orgId),
+                schoolApi.getFeeStructuresByOrganization(orgId),
             ]);
             setFees(feeRes.status       === 'fulfilled' ? (feeRes.value.data.data  || []) : []);
-            setClassrooms(clsRes.status === 'fulfilled' ? (clsRes.value.data.data  || []) : []);
-            setStudents(stuRes.status   === 'fulfilled' ? (stuRes.value.data.data  || []) : []);
+            // Only ACTIVE classrooms
+            const allCls = clsRes.status === 'fulfilled' ? (clsRes.value.data.data  || []) : [];
+            const activeCls = allCls.filter(c => c.status === 'ACTIVE');
+            setClassrooms(activeCls);
+            // Only ACTIVE students from ACTIVE classrooms
+            const allStu = stuRes.status === 'fulfilled' ? (stuRes.value.data.data  || []) : [];
+            const activeStuIds = new Set(allStu.filter(s => s.status === 'ACTIVE').map(s => s.userId));
+            setStudents(allStu.filter(s => s.status === 'ACTIVE'));
+            setStructures(strRes.status === 'fulfilled' ? (strRes.value.data.data  || []) : []);
         } catch { toast.error('Failed to load fees'); }
         finally { setLoading(false); }
     };
 
-    // Enrich fees with classroom info via student mapping
-    const enriched = fees.map(f => {
-        // f.studentId is the DB id of student record
-        const student = students.find(s => s.id === f.studentId);
-        // Match student's className to classroom's classroomName
-        const classroom = student
-            ? classrooms.find(c =>
-                c.classroomName === student.className ||
-                c.classroomName?.toLowerCase() === student.className?.toLowerCase()
-              )
-            : null;
-        return {
-            ...f,
-            studentName:   student?.userFullName || f.studentName || '—',
-            classroomId:   classroom?.id || null,
-            classroomName: classroom?.classroomName || (student?.className || '—'),
-        };
-    });
+    // Enrich fees — only ACTIVE students ki fees show karo
+    const enriched = fees
+        .filter(f => {
+            // Student ACTIVE hai ya nahi check karo
+            const student = students.find(s => s.userId === f.studentId);
+            return !!student; // agar student state mein hai (ACTIVE only) to show karo
+        })
+        .map(f => {
+            const student  = students.find(s => s.userId === f.studentId);
+            const classroom = student
+                ? classrooms.find(c =>
+                    c.classroomName === student.className ||
+                    c.classroomName?.toLowerCase() === student.className?.toLowerCase()
+                  )
+                : null;
+            return {
+                ...f,
+                studentName:   student?.userFullName || f.studentName || '—',
+                classroomId:   classroom?.id || null,
+                classroomName: classroom?.classroomName || (student?.className || '—'),
+            };
+        });
+
+    /* ── Generate Fees ── */
+    const handleGenerateFees = async () => {
+        if (structures.length === 0) { toast.warn('No fee structures defined. Go to Fee Structure page first.'); return; }
+        setGenerating(true); setGenResult(null);
+        let created = 0, skipped = 0, failed = 0;
+        try {
+            if (students.length === 0) { toast.warn('No students found.'); setGenerating(false); return; }
+            const existingFees = fees;
+            const [yr, mo] = genMonth.split('-').map(Number);
+            const refDate  = new Date(yr, mo - 1, 1);
+            const tasks = [];
+            for (const struct of structures) {
+                const dueDate = computeDueDate(struct.frequency, struct.dueDay, refDate);
+                for (const student of students) {
+                    const alreadyExists = existingFees.some(f => f.studentId === student.userId && f.feeType === struct.feeType && f.dueDate === dueDate);
+                    if (alreadyExists) { skipped++; continue; }
+                    tasks.push(
+                        schoolApi.createFee({
+                            feeType: struct.feeType, amount: struct.amount, dueDate,
+                            description: struct.description || `${TYPE_LABEL[struct.feeType] || struct.feeType} — ${FREQ_LABEL[struct.frequency] || struct.frequency}`,
+                            studentId: student.userId, organizationId: parseInt(orgId),
+                        }).then(() => { created++; }).catch(() => { failed++; })
+                    );
+                }
+            }
+            await Promise.all(tasks);
+            setGenResult({ created, skipped, failed, students: students.length, structures: structures.length });
+            load();
+        } catch (err) { toast.error('Generation failed'); }
+        finally { setGenerating(false); }
+    };
 
     const openPay = (fee) => {
         setPaying(fee.id);
@@ -83,6 +145,15 @@ const SchoolAllFees = () => {
             setPayAmount('');
             load();
         } catch (err) { toast.error(err?.response?.data?.message || 'Payment failed'); }
+    };
+
+    const handleWaive = async (feeId) => {
+        if (!window.confirm("Are you sure you want to waive this fee?")) return;
+        try {
+            await schoolApi.waiveFee(feeId);
+            toast.success('Fee waived successfully');
+            load();
+        } catch (err) { toast.error(err?.response?.data?.message || 'Failed to waive fee'); }
     };
 
     const filtered = enriched.filter(f => {
@@ -113,6 +184,14 @@ const SchoolAllFees = () => {
                     <div>
                         <h2 className="text-xl font-bold text-gray-800">Fee Records</h2>
                         <p className="text-sm text-gray-400 mt-0.5">All fee records across classrooms</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button onClick={() => { setGenResult(null); setGenModal(true); }}
+                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            Generate Fees
+                        </button>
+                        <button onClick={load} className="text-xs font-semibold text-gray-500 hover:text-violet-600 border border-gray-200 px-3 py-2 rounded-lg hover:border-violet-300 transition-colors">Refresh</button>
                     </div>
                 </div>
 
@@ -209,16 +288,22 @@ const SchoolAllFees = () => {
                                             </span>
                                         </td>
                                         <td className="px-4 py-3.5">
-                                            <div className="flex gap-2 flex-wrap">
+                                            <div className="flex gap-2 flex-wrap items-center">
                                                 {(f.status === 'PENDING' || f.status === 'OVERDUE' || f.status === 'PARTIAL') && (
-                                                    <button onClick={() => openPay(f)}
-                                                        className="text-xs bg-green-50 text-green-700 border border-green-100 px-2.5 py-0.5 rounded-full font-semibold hover:bg-green-100 transition-colors">
-                                                        Pay
-                                                    </button>
+                                                    <>
+                                                        <button onClick={() => openPay(f)}
+                                                            className="text-[11px] bg-green-50 text-green-700 border border-green-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider hover:bg-green-100 transition-colors">
+                                                            Pay
+                                                        </button>
+                                                        <button onClick={() => handleWaive(f.id)}
+                                                            className="text-[11px] bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider hover:bg-amber-100 transition-colors">
+                                                            Waive
+                                                        </button>
+                                                    </>
                                                 )}
                                                 {f.classroomId && (
                                                     <button onClick={() => navigate(`/school/classrooms/${f.classroomId}/fees`)}
-                                                        className="text-xs text-violet-600 hover:text-violet-800 font-semibold hover:underline">
+                                                        className="text-xs text-violet-600 hover:text-violet-800 font-semibold hover:underline ml-1">
                                                         View
                                                     </button>
                                                 )}
@@ -254,6 +339,66 @@ const SchoolAllFees = () => {
                             Confirm Payment
                         </button>
                     </div>
+                </div>
+            </Modal>
+
+            {/* Generate Fees Modal */}
+            <Modal open={genModal} onClose={() => { if (!generating) setGenModal(false); }} title="Generate Fees for All Students">
+                <div className="space-y-5">
+                    {!genResult ? (
+                        <>
+                            {structures.length === 0 ? (
+                                <div className="text-center py-6">
+                                    <p className="text-sm font-medium text-gray-600">No fee structures defined</p>
+                                    <p className="text-xs text-gray-400 mt-1">Go to Fee Structure page to add structures first</p>
+                                    <button onClick={() => { setGenModal(false); navigate('/school/fee-structure'); }} className="mt-3 text-xs font-semibold text-violet-600 hover:underline">Go to Fee Structure →</button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                                        <p className="text-sm font-semibold text-gray-700">Will generate these fees for all {students.length} students:</p>
+                                        <ul className="text-xs text-gray-500 space-y-1.5">
+                                            {structures.map(s => (
+                                                <li key={s.id} className="flex items-center gap-2">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
+                                                    <span>{TYPE_LABEL[s.feeType] || s.feeType} — ₹{s.amount?.toLocaleString()} ({FREQ_LABEL[s.frequency]}, due day {s.dueDay})</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <p className="text-xs text-gray-400 pt-1">Duplicate fees will be skipped automatically.</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-medium text-gray-600 mb-1">For Month</label>
+                                        <input type="month" value={genMonth} onChange={e => setGenMonth(e.target.value)}
+                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+                                    </div>
+                                    <div className="flex gap-3">
+                                        <button onClick={() => setGenModal(false)} disabled={generating} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+                                        <button onClick={handleGenerateFees} disabled={generating}
+                                            className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                                            {generating ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</> : <><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Generate Now</>}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="text-center py-4">
+                                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                </div>
+                                <p className="text-base font-bold text-gray-800">Generation Complete!</p>
+                                <p className="text-xs text-gray-400 mt-1">{genResult.structures} structures × {genResult.students} students</p>
+                            </div>
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center"><p className="text-2xl font-black text-green-700">{genResult.created}</p><p className="text-xs font-medium text-green-600 mt-1">Created</p></div>
+                                <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 text-center"><p className="text-2xl font-black text-amber-600">{genResult.skipped}</p><p className="text-xs font-medium text-amber-500 mt-1">Skipped</p></div>
+                                <div className="bg-red-50 border border-red-100 rounded-xl p-4 text-center"><p className="text-2xl font-black text-red-600">{genResult.failed}</p><p className="text-xs font-medium text-red-500 mt-1">Failed</p></div>
+                            </div>
+                            <button onClick={() => setGenModal(false)} className="w-full bg-violet-600 hover:bg-violet-700 text-white text-sm font-bold py-2.5 rounded-lg">Done</button>
+                        </div>
+                    )}
                 </div>
             </Modal>
         </SchoolLayout>

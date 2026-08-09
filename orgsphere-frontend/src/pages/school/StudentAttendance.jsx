@@ -1,156 +1,438 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
-import { userApi } from '../../api/userApi';
-import DashboardLayout from '../../components/layout/DashboardLayout';
+import { companyApi } from '../../api/companyApi';
 import SchoolLayout from '../../components/layout/SchoolLayout';
-import Modal from '../../components/ui/Modal';
 
-const buildNav = (id) => [
-    { path: '/school/dashboard',  label: 'Dashboard',  icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
-    { path: '/school/classrooms', label: 'Classrooms', icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
-    { path: `/school/classrooms/${id}/students`,   label: 'Students',   icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /></svg> },
-    { path: `/school/classrooms/${id}/attendance`, label: 'Attendance', icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { path: `/school/classrooms/${id}/fees`,       label: 'Fees',       icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { path: `/school/classrooms/${id}/leaves`,     label: 'Leaves',     icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
-];
-
-const F = ({ label, children }) => <div><label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>{children}</div>;
-const Input  = (props) => <input   {...props} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />;
-const Select = ({ children, ...props }) => <select {...props} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400">{children}</select>;
-
-const STATUS_STYLE = {
-    PRESENT:  'bg-green-50 text-green-700 border-green-100',
-    ABSENT:   'bg-red-50 text-red-600 border-red-100',
-    ON_LEAVE: 'bg-amber-50 text-amber-600 border-amber-100',
+/* ── Status config ── */
+const STATUS = {
+    PRESENT:  { label: 'Present',  bg: 'bg-green-500',  light: 'bg-green-50 border-green-200 text-green-700',  icon: '✓' },
+    ABSENT:   { label: 'Absent',   bg: 'bg-red-500',    light: 'bg-red-50 border-red-200 text-red-600',         icon: '✗' },
+    ON_LEAVE: { label: 'On Leave', bg: 'bg-amber-500',  light: 'bg-amber-50 border-amber-200 text-amber-600',   icon: '⏤' },
 };
 
-const StudentAttendance = () => {
+export default function StudentAttendance() {
     const { classroomId } = useParams();
-    const navigate = useNavigate();
+    const navigate        = useNavigate();
     const { user, organizationId: reduxOrgId } = useSelector(s => s.auth);
     const rawOrgId = reduxOrgId || user?.organizationId;
     const lsOrgId  = localStorage.getItem('organizationId');
     const orgId    = rawOrgId || (lsOrgId && lsOrgId !== 'null' ? parseInt(lsOrgId, 10) : null);
 
-    const today = new Date().toISOString().split('T')[0];
-    const EMPTY = { attendanceDate: today, status: 'PRESENT', remarks: '', userId: '' };
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    const [attendances, setAttendances] = useState([]);
-    const [students, setStudents]       = useState([]);
-    const [classroom, setClassroom]     = useState(null);
-    const [loading, setLoading]         = useState(true);
-    const [saving, setSaving]           = useState(false);
-    const [modal, setModal]             = useState(false);
-    const [editingId, setEditingId]     = useState(null);
-    const [form, setForm]               = useState(EMPTY);
+    const [classroom,   setClassroom]   = useState(null);
+    const [students,    setStudents]    = useState([]);
+    const [bulkStatus,  setBulkStatus]  = useState({});
+    const [allRecords,  setAllRecords]  = useState([]);
+    const [tab,         setTab]         = useState('bulk'); // 'bulk' | 'history' | 'monthly'
+    const [loading,     setLoading]     = useState(true);
+    const [saving,      setSaving]      = useState(false);
+    const [historyDate, setHistoryDate] = useState('');
+    const [todayLocked, setTodayLocked] = useState(false); // true if today's attendance already saved
 
-    useEffect(() => { loadData(); }, [classroomId]);
-
-    const loadData = async () => {
+    /* ── Load classroom + students ── */
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const cr = await schoolApi.getClassroom(classroomId);
-            const c = cr.data.data;
+            const c  = cr.data.data;
             setClassroom(c);
-            // Fetch students of this specific classroom
+
             const stuRes = c?.classroomName
                 ? await schoolApi.getStudentsByClass(orgId, c.classroomName)
                 : await schoolApi.getStudentsByOrganization(orgId);
-            const classStudents = stuRes.data.data || [];
-            const studentUserIds = new Set(classStudents.map(s => s.userId));
-            setStudents(classStudents.map(s => ({ id: s.userId, name: s.userFullName })));
+            const stuList = (stuRes.data.data || []).map(s => ({ userId: s.userId, name: s.userFullName, studentId: s.studentId }));
+            setStudents(stuList);
 
-            // Fetch ALL attendance then filter to only this classroom's students
-            const { companyApi } = await import('../../api/companyApi');
-            const res = await companyApi.getAttendanceByOrganization(orgId);
-            const allAtt = res.data.data || [];
-            // Keep only records for students in this classroom
-            setAttendances(allAtt.filter(a => studentUserIds.has(a.userId)));
-        } catch { toast.error('Failed to load attendance'); }
+            const attRes  = await companyApi.getAttendanceByOrganization(orgId);
+            const allAtt  = attRes.data.data || [];
+            const stuUserIds = new Set(stuList.map(s => s.userId));
+            const filtered = allAtt.filter(a => stuUserIds.has(a.userId));
+            setAllRecords(filtered);
+
+            // Check if today's attendance is already saved (locked)
+            const todayRecords = filtered.filter(a => a.attendanceDate === todayStr);
+            const isLocked = stuList.length > 0 && todayRecords.length >= stuList.length;
+            setTodayLocked(isLocked);
+
+            // Pre-fill bulk status for today
+            fillBulkForDate(stuList, filtered, todayStr);
+        } catch { toast.error('Failed to load data'); }
         finally { setLoading(false); }
+    }, [classroomId, orgId]);
+
+    useEffect(() => { loadData(); }, [loadData]);
+
+    /* ── Pre-fill bulk grid for a date ── */
+    const fillBulkForDate = (stuList, records, d) => {
+        const map = {};
+        stuList.forEach(s => {
+            const existing = records.find(r => r.userId === s.userId && r.attendanceDate === d);
+            map[s.userId] = existing
+                ? { status: existing.status, remarks: existing.remarks || '', existingId: existing.id }
+                : { status: 'PRESENT', remarks: '', existingId: null };
+        });
+        setBulkStatus(map);
     };
 
-    const openAdd  = () => { setEditingId(null); setForm(EMPTY); setModal(true); };
-    const openEdit = (a) => {
-        setEditingId(a.id);
-        setForm({ attendanceDate: a.attendanceDate || today, status: a.status, remarks: a.remarks || '', userId: a.userId || '' });
-        setModal(true);
+    /* ── Mark All ── */
+    const markAll = (status) => {
+        if (todayLocked) return;
+        setBulkStatus(prev => {
+            const next = { ...prev };
+            students.forEach(s => { next[s.userId] = { ...next[s.userId], status }; });
+            return next;
+        });
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    /* ── Toggle single student status ── */
+    const cycleStatus = (userId) => {
+        if (todayLocked) return;
+        const order = ['PRESENT', 'ABSENT', 'ON_LEAVE'];
+        setBulkStatus(prev => {
+            const cur = prev[userId]?.status || 'PRESENT';
+            const next = order[(order.indexOf(cur) + 1) % order.length];
+            return { ...prev, [userId]: { ...prev[userId], status: next } };
+        });
+    };
+
+    /* ── Save bulk attendance (today only, once) ── */
+    const handleSaveAll = async () => {
+        if (todayLocked) {
+            toast.info("Today's attendance is already saved and cannot be changed.");
+            return;
+        }
+        if (students.length === 0) return toast.warn('No students in this classroom');
         setSaving(true);
+        let saved = 0, failed = 0;
         try {
-            const { companyApi } = await import('../../api/companyApi');
-            const payload = { ...form, userId: parseInt(form.userId), organizationId: parseInt(orgId) };
-            if (editingId) {
-                await companyApi.updateAttendance(editingId, payload);
-                toast.success('Attendance updated');
-            } else {
-                await companyApi.markAttendance(payload);
-                toast.success('Attendance marked');
-            }
-            setModal(false); loadData();
-        } catch (err) { toast.error(err?.response?.data?.message || 'Failed'); }
-        finally { setSaving(false); }
+            await Promise.all(students.map(async (s) => {
+                const entry = bulkStatus[s.userId] || { status: 'PRESENT', remarks: '' };
+                const payload = {
+                    userId:         s.userId,
+                    organizationId: parseInt(orgId),
+                    attendanceDate: todayStr,
+                    status:         entry.status,
+                    remarks:        entry.remarks || '',
+                };
+                try {
+                    // Only create, never update (locked after save)
+                    if (!entry.existingId) {
+                        await companyApi.markAttendance(payload);
+                    }
+                    saved++;
+                } catch { failed++; }
+            }));
+            if (failed === 0) toast.success(`✓ Attendance saved for ${saved} students`);
+            else toast.warn(`Saved ${saved}, failed ${failed}`);
+            await loadData();
+        } finally { setSaving(false); }
     };
+
+    /* ── Derived stats for today ── */
+    const stats = students.reduce((acc, s) => {
+        const st = bulkStatus[s.userId]?.status || 'PRESENT';
+        acc[st] = (acc[st] || 0) + 1;
+        return acc;
+    }, {});
+    const presentPct = students.length > 0 ? Math.round(((stats.PRESENT || 0) / students.length) * 100) : 0;
+
+    /* ── History tab: filter by selected date ── */
+    const historyRecords = historyDate
+        ? allRecords.filter(a => a.attendanceDate === historyDate)
+        : [...allRecords].sort((a, b) => b.attendanceDate?.localeCompare(a.attendanceDate));
+
+    /* ── Monthly report: group by student, calculate % ── */
+    const monthlyReport = students.map(s => {
+        const stuRecords = allRecords.filter(r => r.userId === s.userId);
+        const total      = stuRecords.length;
+        const present    = stuRecords.filter(r => r.status === 'PRESENT').length;
+        const absent     = stuRecords.filter(r => r.status === 'ABSENT').length;
+        const onLeave    = stuRecords.filter(r => r.status === 'ON_LEAVE').length;
+        const pct        = total > 0 ? Math.round((present / total) * 100) : 0;
+        return { ...s, total, present, absent, onLeave, pct };
+    });
 
     const label = classroom?.classroomName || `Classroom #${classroomId}`;
 
     return (
         <SchoolLayout>
-            <div className="p-6 max-w-7xl mx-auto">
-                <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
-                    <button onClick={() => navigate('/school/classrooms')} className="hover:text-violet-600">Classrooms</button>
+            <div className="p-6 max-w-5xl mx-auto space-y-5">
+
+                {/* Breadcrumb */}
+                <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <button onClick={() => navigate('/school/classrooms')} className="hover:text-violet-600 transition-colors">Classrooms</button>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-                    <span className="text-gray-700 font-medium">{label}</span>
+                    <button onClick={() => navigate(`/school/classrooms/${classroomId}/students`)} className="hover:text-violet-600 transition-colors">{label}</button>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    <span className="text-gray-700 font-medium">Attendance</span>
                 </div>
-                <div className="flex items-center justify-between mb-6">
-                    <div><h2 className="text-lg font-semibold text-gray-800">Student Attendance — {label}</h2><p className="text-sm text-gray-400 mt-0.5">Mark and track student daily attendance</p></div>
-                    <button onClick={openAdd} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                        Mark Attendance
-                    </button>
+
+                {/* Header */}
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                        <h2 className="text-lg font-semibold text-gray-800">Student Attendance</h2>
+                        <p className="text-sm text-gray-400 mt-0.5">{label} · {students.length} students · <span className="font-medium text-gray-600">{todayStr}</span></p>
+                    </div>
+                    {/* Tab switcher */}
+                    <div className="flex bg-gray-100 rounded-lg p-1 gap-1">
+                        <button onClick={() => setTab('bulk')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${tab === 'bulk' ? 'bg-white shadow text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Mark Today
+                        </button>
+                        <button onClick={() => setTab('history')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${tab === 'history' ? 'bg-white shadow text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                            History
+                        </button>
+                        <button onClick={() => setTab('monthly')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${tab === 'monthly' ? 'bg-white shadow text-violet-700' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Monthly Report
+                        </button>
+                    </div>
                 </div>
+
                 {loading ? (
-                    <div className="flex justify-center h-60 items-center"><div className="w-7 h-7 border-[3px] border-violet-600 border-t-transparent rounded-full animate-spin" /></div>
-                ) : attendances.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-gray-200 p-16 text-center"><p className="text-sm font-medium text-gray-700">No attendance records</p><p className="text-xs text-gray-400 mt-1">Click "Mark Attendance" to get started</p></div>
+                    <div className="flex justify-center items-center h-60">
+                        <div className="w-8 h-8 border-[3px] border-violet-600 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                ) : tab === 'bulk' ? (
+                    <>
+                        {/* Lock notice */}
+                        {todayLocked && (
+                            <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                <div>
+                                    <p className="text-sm font-semibold text-amber-700">Attendance Locked</p>
+                                    <p className="text-xs text-amber-600 mt-0.5">Today's attendance has been saved and cannot be modified.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Actions bar */}
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-3">
+                            <div className="flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                <span className="text-sm font-semibold text-gray-700">{todayStr}</span>
+                                <span className="text-xs text-gray-400">(Today Only)</span>
+                            </div>
+                            {!todayLocked && (
+                                <div className="flex items-center gap-2 ml-auto">
+                                    <button onClick={() => markAll('PRESENT')}  className="px-3 py-1.5 text-xs font-semibold bg-green-50 text-green-700 border border-green-200 rounded-lg hover:bg-green-100 transition-colors">All Present</button>
+                                    <button onClick={() => markAll('ABSENT')}   className="px-3 py-1.5 text-xs font-semibold bg-red-50 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors">All Absent</button>
+                                    <button onClick={() => markAll('ON_LEAVE')} className="px-3 py-1.5 text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors">All On Leave</button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Stats row */}
+                        <div className="grid grid-cols-4 gap-4">
+                            {[
+                                { label: 'Total',    value: students.length,       color: 'text-gray-800',  bg: 'bg-gray-50 border-gray-100' },
+                                { label: 'Present',  value: stats.PRESENT  || 0,  color: 'text-green-700', bg: 'bg-green-50 border-green-100' },
+                                { label: 'Absent',   value: stats.ABSENT   || 0,  color: 'text-red-600',   bg: 'bg-red-50 border-red-100' },
+                                { label: 'On Leave', value: stats.ON_LEAVE || 0, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-100' },
+                            ].map(s => (
+                                <div key={s.label} className={`${s.bg} border rounded-xl p-4 text-center`}>
+                                    <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                                    <p className="text-xs font-medium text-gray-500 mt-1">{s.label}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Attendance % bar */}
+                        {students.length > 0 && (
+                            <div className="bg-white rounded-xl border border-gray-100 px-5 py-3 flex items-center gap-4">
+                                <span className="text-sm font-medium text-gray-600">Attendance Rate</span>
+                                <div className="flex-1 bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                                    <div
+                                        className={`h-full rounded-full transition-all duration-500 ${presentPct >= 75 ? 'bg-green-500' : presentPct >= 50 ? 'bg-amber-400' : 'bg-red-500'}`}
+                                        style={{ width: `${presentPct}%` }}
+                                    />
+                                </div>
+                                <span className={`text-sm font-bold ${presentPct >= 75 ? 'text-green-700' : presentPct >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{presentPct}%</span>
+                            </div>
+                        )}
+
+                        {/* Student cards grid */}
+                        {students.length === 0 ? (
+                            <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+                                <p className="text-sm font-medium text-gray-600">No students in this classroom</p>
+                                <p className="text-xs text-gray-400 mt-1">Add students first from the Students tab</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                                {students.map((s) => {
+                                    const entry = bulkStatus[s.userId] || { status: 'PRESENT', remarks: '' };
+                                    const cfg   = STATUS[entry.status] || STATUS.PRESENT;
+                                    return (
+                                        <div key={s.userId} className={`bg-white rounded-xl border-2 transition-all duration-200 p-4 ${todayLocked ? 'opacity-80' : ''} ${entry.status === 'PRESENT' ? 'border-green-200' : entry.status === 'ABSENT' ? 'border-red-200' : 'border-amber-200'}`}>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <div className="flex items-center gap-3">
+                                                    <div className={`w-9 h-9 rounded-full ${cfg.bg} flex items-center justify-center text-white text-sm font-bold`}>
+                                                        {s.name?.charAt(0)?.toUpperCase() || '?'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-semibold text-gray-800 leading-tight">{s.name}</p>
+                                                        {s.studentId && <p className="text-[10px] text-gray-400 mt-0.5">{s.studentId}</p>}
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    onClick={() => cycleStatus(s.userId)}
+                                                    disabled={todayLocked}
+                                                    className={`px-3 py-1 rounded-full text-xs font-bold border transition-all ${cfg.light} ${todayLocked ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                                                >
+                                                    {cfg.label}
+                                                </button>
+                                            </div>
+                                            {!todayLocked && (
+                                                <input
+                                                    type="text"
+                                                    placeholder="Remarks (optional)"
+                                                    value={entry.remarks}
+                                                    onChange={e => setBulkStatus(prev => ({ ...prev, [s.userId]: { ...prev[s.userId], remarks: e.target.value } }))}
+                                                    className="w-full text-xs border border-gray-100 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-violet-300 bg-gray-50 placeholder-gray-300"
+                                                />
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Save button */}
+                        {students.length > 0 && !todayLocked && (
+                            <div className="flex justify-end pt-2">
+                                <button
+                                    onClick={handleSaveAll}
+                                    disabled={saving}
+                                    className="bg-violet-600 hover:bg-violet-700 disabled:opacity-60 text-white text-sm font-semibold px-8 py-2.5 rounded-xl flex items-center gap-2 shadow-sm transition-colors"
+                                >
+                                    {saving ? (
+                                        <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Saving...</>
+                                    ) : (
+                                        <><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg> Save Attendance ({students.length} students)</>
+                                    )}
+                                </button>
+                            </div>
+                        )}
+                    </>
+                ) : tab === 'history' ? (
+                    /* ── History tab ── */
+                    <div className="space-y-4">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <label className="text-sm font-medium text-gray-600">Filter by Date:</label>
+                            <input
+                                type="date"
+                                value={historyDate}
+                                max={todayStr}
+                                onChange={e => setHistoryDate(e.target.value)}
+                                className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
+                            />
+                            {historyDate && (
+                                <button onClick={() => setHistoryDate('')} className="text-xs text-gray-400 hover:text-gray-600 underline">Clear</button>
+                            )}
+                            <span className="ml-auto text-xs text-gray-400">{historyRecords.length} records</span>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+                            {historyRecords.length === 0 ? (
+                                <div className="p-16 text-center">
+                                    <p className="text-sm font-medium text-gray-600">No attendance records found</p>
+                                </div>
+                            ) : (
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-100 bg-gray-50">
+                                            {['Student', 'Date', 'Status', 'Remarks'].map(h => (
+                                                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {historyRecords.map(a => (
+                                            <tr key={a.id} className="hover:bg-gray-50 transition-colors">
+                                                <td className="px-4 py-3 text-sm font-medium text-gray-700">{a.userFullName}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-500">{a.attendanceDate}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS[a.status]?.light || 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                                                        {STATUS[a.status]?.label || a.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-sm text-gray-400">{a.remarks || '—'}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+                    </div>
                 ) : (
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-                        <table className="w-full">
-                            <thead><tr className="border-b border-gray-100 bg-gray-50">{['Student','Date','Status','Remarks','Action'].map(h=><th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr></thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {attendances.map(a=>(
-                                    <tr key={a.id} className="hover:bg-gray-50">
-                                        <td className="px-4 py-3.5 text-sm font-medium text-gray-700">{a.userFullName}</td>
-                                        <td className="px-4 py-3.5 text-sm text-gray-500">{a.attendanceDate}</td>
-                                        <td className="px-4 py-3.5"><span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[a.status]||'bg-gray-50 text-gray-500 border-gray-100'}`}>{a.status}</span></td>
-                                        <td className="px-4 py-3.5 text-sm text-gray-500">{a.remarks||'—'}</td>
-                                        <td className="px-4 py-3.5"><button onClick={()=>openEdit(a)} className="text-xs text-violet-500 hover:text-violet-700 font-medium">Edit</button></td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    /* ── Monthly Report tab ── */
+                    <div className="space-y-4">
+                        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                            <p className="text-sm text-gray-500">Student-wise attendance summary across all recorded dates. Students with attendance below <span className="font-bold text-red-600">75%</span> are highlighted.</p>
+                        </div>
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
+                            {monthlyReport.length === 0 ? (
+                                <div className="p-16 text-center">
+                                    <p className="text-sm font-medium text-gray-600">No data available</p>
+                                </div>
+                            ) : (
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b border-gray-100 bg-gray-50">
+                                            {['Student', 'Total Days', 'Present', 'Absent', 'On Leave', 'Attendance %', 'Status'].map(h => (
+                                                <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-gray-50">
+                                        {monthlyReport.map(s => (
+                                            <tr key={s.userId} className={`hover:bg-gray-50 transition-colors ${s.pct < 75 && s.total > 0 ? 'bg-red-50/30' : ''}`}>
+                                                <td className="px-4 py-3.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-7 h-7 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-xs font-bold">
+                                                            {s.name?.charAt(0)?.toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-medium text-gray-800">{s.name}</p>
+                                                            <p className="text-[10px] text-gray-400">{s.studentId}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3.5 text-sm text-gray-600 font-medium">{s.total}</td>
+                                                <td className="px-4 py-3.5 text-sm text-green-700 font-medium">{s.present}</td>
+                                                <td className="px-4 py-3.5 text-sm text-red-600 font-medium">{s.absent}</td>
+                                                <td className="px-4 py-3.5 text-sm text-amber-600 font-medium">{s.onLeave}</td>
+                                                <td className="px-4 py-3.5">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="w-20 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full ${s.pct >= 75 ? 'bg-green-500' : s.pct >= 50 ? 'bg-amber-400' : 'bg-red-500'}`}
+                                                                style={{ width: `${s.pct}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className={`text-sm font-bold ${s.pct >= 75 ? 'text-green-700' : s.pct >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{s.pct}%</span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-4 py-3.5">
+                                                    {s.total === 0 ? (
+                                                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-50 text-gray-400 border border-gray-100">No Data</span>
+                                                    ) : s.pct >= 75 ? (
+                                                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">Good</span>
+                                                    ) : (
+                                                        <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-100">⚠ Low</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>
-            <Modal open={modal} onClose={()=>setModal(false)} title={editingId?'Edit Attendance':'Mark Attendance'}>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <F label="Select Student *"><Select required value={form.userId} onChange={e=>setForm({...form,userId:e.target.value})}><option value="">-- Select student --</option>{students.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</Select></F>
-                    <F label="Date *"><Input required type="date" value={form.attendanceDate} onChange={e=>setForm({...form,attendanceDate:e.target.value})} /></F>
-                    <F label="Status *"><Select value={form.status} onChange={e=>setForm({...form,status:e.target.value})}><option value="PRESENT">Present</option><option value="ABSENT">Absent</option><option value="ON_LEAVE">On Leave</option></Select></F>
-                    <F label="Remarks"><Input value={form.remarks} onChange={e=>setForm({...form,remarks:e.target.value})} placeholder="Optional" /></F>
-                    <div className="flex gap-3 pt-2">
-                        <button type="button" onClick={()=>setModal(false)} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50">Cancel</button>
-                        <button type="submit" disabled={saving} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2.5 rounded-lg disabled:opacity-60">{saving?'Saving...':editingId?'Update':'Mark'}</button>
-                    </div>
-                </form>
-            </Modal>
         </SchoolLayout>
     );
-};
-export default StudentAttendance;
+}

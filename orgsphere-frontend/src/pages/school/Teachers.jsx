@@ -106,6 +106,10 @@ const Teachers = () => {
     const [form, setForm] = useState(EMPTY);
     const [viewMode, setViewMode] = useViewMode('list', 'teachers_view');
 
+    // New filtering state
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('ACTIVE');
+
     useEffect(() => {
         load();
     }, [deptName]);
@@ -220,87 +224,164 @@ const Teachers = () => {
                     </svg>
                     <span className="text-gray-700 font-medium">{decoded}</span>
                 </div>
-                <div className="flex items-center justify-between mb-6">
-                    <div><h2 className="text-lg font-semibold text-gray-800">Teachers — {decoded}</h2><p
-                        className="text-sm text-gray-400 mt-0.5">Manage teacher profiles</p></div>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-800">Teachers — {decoded}</h2>
+                        <p className="text-sm text-gray-500 mt-1">Manage teacher profiles</p>
+                    </div>
                     <div className="flex items-center gap-3">
                         <ViewToggle viewMode={viewMode} onChange={setViewMode} />
-                        <button onClick={openAdd}
-                                className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        <button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition-colors shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                             Add Teacher
                         </button>
                     </div>
                 </div>
+                
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="relative flex-1 max-w-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 absolute left-3 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <input type="text" placeholder="Search teachers..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </div>
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[140px] text-gray-700 font-medium">
+                        <option value="ALL">All Status</option>
+                        <option value="ACTIVE">Active</option>
+                        <option value="ON_LEAVE">On Leave</option>
+                        <option value="TERMINATED">Terminated</option>
+                    </select>
+                </div>
+
                 {loading ? <div className="flex justify-center h-60 items-center">
                         <div
-                            className="w-7 h-7 border-[3px] border-violet-600 border-t-transparent rounded-full animate-spin"/>
+                            className="w-7 h-7 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin"/>
                     </div>
                     : teachers.length === 0 ?
                         <div className="bg-white rounded-xl border border-gray-200 p-16 text-center"><p
                             className="text-sm font-medium text-gray-700">No teachers yet</p><p
                             className="text-xs text-gray-400 mt-1">Click "Add Teacher" to get started</p></div>
-                        : viewMode === 'grid' ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {teachers.map(t => (
-                                    <div key={t.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-sm shrink-0">
-                                                {t.userFullName?.charAt(0)?.toUpperCase() || 'T'}
-                                            </div>
-                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[t.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{t.status}</span>
-                                        </div>
-                                        <h3 className="text-sm font-bold text-gray-800 truncate">{t.userFullName}</h3>
-                                        <p className="text-xs text-gray-400 truncate">{t.userEmail}</p>
-                                        <div className="mt-3 pt-3 border-t border-gray-100 space-y-1.5">
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-gray-400">Subject</span>
-                                                <span className="font-semibold text-gray-700">{t.specialization || '—'}</span>
-                                            </div>
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-gray-400">Qualification</span>
-                                                <span className="font-semibold text-gray-700">{t.qualification || '—'}</span>
-                                            </div>
-                                            <div className="flex justify-between text-xs">
-                                                <span className="text-gray-400">Experience</span>
-                                                <span className="font-semibold text-gray-700">{t.experienceYears ? `${t.experienceYears} yrs` : '—'}</span>
-                                            </div>
-                                        </div>
-                                        <button onClick={() => openEdit(t)} className="mt-3 w-full text-xs text-center text-violet-600 font-semibold hover:underline">Edit</button>
+                        : (() => {
+                            const filtered = teachers.filter(t => {
+                                const matchSearch = !search || t.userFullName?.toLowerCase().includes(search.toLowerCase()) || t.teacherId?.toLowerCase().includes(search.toLowerCase()) || t.userEmail?.toLowerCase().includes(search.toLowerCase());
+                                const matchStatus = statusFilter === 'ALL' || t.status === statusFilter;
+                                return matchSearch && matchStatus;
+                            });
+
+                            if (filtered.length === 0) {
+                                return (
+                                    <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+                                        <p className="text-sm font-medium text-gray-700">No teachers found</p>
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
-                                <table className="w-full">
-                                    <thead>
-                                    <tr className="border-b border-gray-100 bg-gray-50">{['Teacher ID', 'Name', 'Email', 'Specialization', 'Qualification', 'Experience', 'Status', 'Action'].map(h =>
-                                        <th key={h}
-                                            className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-50">
-                                    {teachers.map(t => (
-                                        <tr key={t.id} className="hover:bg-gray-50">
-                                            <td className="px-4 py-3.5 text-sm font-medium text-gray-700">{t.teacherId}</td>
-                                            <td className="px-4 py-3.5 text-sm text-gray-700">{t.userFullName}</td>
-                                            <td className="px-4 py-3.5 text-sm text-gray-500">{t.userEmail}</td>
-                                            <td className="px-4 py-3.5 text-sm text-gray-500">{t.specialization}</td>
-                                            <td className="px-4 py-3.5 text-sm text-gray-500">{t.qualification}</td>
-                                            <td className="px-4 py-3.5 text-sm text-gray-500">{t.experienceYears ? `${t.experienceYears} yrs` : '—'}</td>
-                                            <td className="px-4 py-3.5"><span
-                                                className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[t.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{t.status}</span>
-                                            </td>
-                                            <td className="px-4 py-3.5">
-                                                <button onClick={() => openEdit(t)}
-                                                        className="text-xs text-violet-500 hover:text-violet-700 font-medium">Edit
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
+                                );
+                            }
+
+                            return viewMode === 'grid' ? (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                                    {filtered.map((t, idx) => {
+                                        const initials = (t.userFullName || 'T').slice(0, 1).toUpperCase();
+                                        const colors = [
+                                            { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-300', icon: 'text-purple-500', hoverBg: 'hover:bg-purple-50', switchBg: 'bg-purple-600' },
+                                            { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-300', icon: 'text-green-500', hoverBg: 'hover:bg-green-50', switchBg: 'bg-green-600' },
+                                            { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-300', icon: 'text-blue-500', hoverBg: 'hover:bg-blue-50', switchBg: 'bg-blue-600' },
+                                        ];
+                                        const pal = colors[idx % colors.length];
+
+                                        return (
+                                            <div key={t.id} className={`bg-white rounded-2xl border ${pal.border} overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col relative group`}>
+                                                <div className="p-4 flex-1">
+                                                    <div className="flex items-center gap-3 mb-5">
+                                                        <div className={`w-11 h-11 rounded-full ${pal.bg} ${pal.text} flex items-center justify-center font-medium text-lg shrink-0 shadow-sm`}>
+                                                            {initials}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <h3 className="text-sm font-semibold text-gray-800 leading-tight truncate">{t.userFullName}</h3>
+                                                            <p className="text-[11px] text-gray-500 mt-0.5">{t.teacherId}</p>
+                                                        </div>
+                                                        <button
+                                                            onClick={async (e) => {
+                                                                e.stopPropagation();
+                                                                const newStatus = t.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                                                                try {
+                                                                    await schoolApi.updateTeacher(t.id, {
+                                                                        teacherId: t.teacherId, specialization: t.specialization,
+                                                                        qualification: t.qualification, experienceYears: t.experienceYears,
+                                                                        joiningDate: t.joiningDate, status: newStatus,
+                                                                        userId: t.userId, organizationId: parseInt(orgId)
+                                                                    });
+                                                                    toast.success(`Teacher marked as ${newStatus}`);
+                                                                    load();
+                                                                } catch { toast.error('Failed to update status'); }
+                                                            }}
+                                                            title="Toggle Status"
+                                                            className={`w-10 h-5 flex items-center rounded-full p-1 cursor-pointer transition-colors ${t.status === 'ACTIVE' ? pal.switchBg : 'bg-gray-300'}`}
+                                                        >
+                                                            <div className={`bg-white w-3.5 h-3.5 rounded-full shadow-md transform transition-transform duration-300 ${t.status === 'ACTIVE' ? 'translate-x-4' : 'translate-x-0'}`} />
+                                                        </button>
+                                                    </div>
+                                                    <div className="space-y-2 mb-2 px-1">
+                                                        <div className="flex items-center text-[13px] text-gray-700">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-2 shrink-0 ${pal.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                                                            <span className="w-24 text-gray-600 font-medium">Email:</span>
+                                                            <span className="truncate flex-1">{t.userEmail || '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center text-[13px] text-gray-700">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-2 shrink-0 ${pal.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                                                            <span className="w-24 text-gray-600 font-medium">Subject:</span>
+                                                            <span className="truncate flex-1">{t.specialization || '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center text-[13px] text-gray-700">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-2 shrink-0 ${pal.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                                            <span className="w-24 text-gray-600 font-medium">Qualif.:</span>
+                                                            <span className="truncate flex-1">{t.qualification || '—'}</span>
+                                                        </div>
+                                                        <div className="flex items-center text-[13px] text-gray-700">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className={`h-4 w-4 mr-2 shrink-0 ${pal.icon}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                            <span className="w-24 text-gray-600 font-medium">Experience:</span>
+                                                            <span className="truncate flex-1">{t.experienceYears ? `${t.experienceYears} Years` : '—'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="p-3 pt-0 mt-2">
+                                                    <button onClick={(e) => { e.stopPropagation(); openEdit(t); }} className={`w-full flex items-center justify-center gap-1.5 py-2 bg-white ${pal.text} ${pal.hoverBg} border ${pal.border} text-xs font-medium rounded-xl transition-colors`}>
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                        Edit
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            ) : (
+                                <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto shadow-sm">
+                                    <table className="w-full">
+                                        <thead>
+                                        <tr className="border-b border-gray-100 bg-gray-50/50">{['Teacher ID', 'Name', 'Email', 'Specialization', 'Qualification', 'Experience', 'Status', 'Action'].map(h =>
+                                            <th key={h}
+                                                className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>)}</tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-50">
+                                        {filtered.map(t => (
+                                            <tr key={t.id} className="hover:bg-blue-50/30 transition-colors">
+                                                <td className="px-4 py-3.5 text-sm font-medium text-gray-700">{t.teacherId}</td>
+                                                <td className="px-4 py-3.5 text-sm text-gray-800 font-medium">{t.userFullName}</td>
+                                                <td className="px-4 py-3.5 text-sm text-gray-500">{t.userEmail}</td>
+                                                <td className="px-4 py-3.5 text-sm text-gray-500">{t.specialization}</td>
+                                                <td className="px-4 py-3.5 text-sm text-gray-500">{t.qualification}</td>
+                                                <td className="px-4 py-3.5 text-sm text-gray-500">{t.experienceYears ? `${t.experienceYears} yrs` : '—'}</td>
+                                                <td className="px-4 py-3.5"><span
+                                                    className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${STATUS_STYLE[t.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{t.status}</span>
+                                                </td>
+                                                <td className="px-4 py-3.5">
+                                                    <button onClick={() => openEdit(t)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            );
+                        })()}
             </div>
             <Modal open={modal} onClose={() => setModal(false)} title={editingId ? 'Edit Teacher' : 'Add Teacher'}>
                 <form onSubmit={handleSubmit} className="space-y-3">
@@ -330,11 +411,17 @@ const Teachers = () => {
                         label="Experience (Yrs)"><Input type="number" value={form.experienceYears}
                                                         onChange={e => set('experienceYears', e.target.value)}
                                                         placeholder="5"/></F></div>
-                    <F label="Status"><Select value={form.status} onChange={e => set('status', e.target.value)}>
-                        <option value="ACTIVE">Active</option>
-                        <option value="ON_LEAVE">On Leave</option>
-                        <option value="TERMINATED">Terminated</option>
-                    </Select></F>
+                    {editingId && (
+                        <div className="pt-2 border-t border-gray-100">
+                            <F label="Status">
+                                <Select value={form.status} onChange={e => set('status', e.target.value)}>
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="ON_LEAVE">On Leave</option>
+                                    <option value="TERMINATED">Terminated</option>
+                                </Select>
+                            </F>
+                        </div>
+                    )}
                     <div className="flex gap-3 pt-2">
                         <button type="button" onClick={() => setModal(false)}
                                 className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50">Cancel

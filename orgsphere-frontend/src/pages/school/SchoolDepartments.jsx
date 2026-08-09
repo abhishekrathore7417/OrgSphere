@@ -59,12 +59,25 @@ const SchoolDepartments = () => {
     return (
         <SchoolLayout>
             <div className="p-6 max-w-7xl mx-auto">
-                <div className="flex items-center justify-between mb-6">
-                    <div><h2 className="text-lg font-semibold text-gray-800">Departments</h2><p className="text-sm text-gray-400 mt-0.5">Select a department to manage teachers, attendance and salary</p></div>
-                    <button onClick={openAdd} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                        Add Department
-                    </button>
+                {/* Header */}
+                <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
+                    <button onClick={() => navigate('/school/dashboard')} className="hover:text-blue-600">Dashboard</button>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+                    <span className="text-gray-700 font-medium">Departments</span>
+                </div>
+
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+                    <div>
+                        <h2 className="text-xl font-semibold text-gray-800">Departments</h2>
+                        <p className="text-sm text-gray-500 mt-1">Manage departments, teachers and attendance</p>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <button onClick={openAdd} className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg flex items-center gap-1.5 transition-colors shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                            Add Department
+                        </button>
+                    </div>
                 </div>
 
                 {loading ? <div className="flex justify-center h-60 items-center"><div className="w-7 h-7 border-[3px] border-violet-600 border-t-transparent rounded-full animate-spin" /></div>
@@ -75,24 +88,46 @@ const SchoolDepartments = () => {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {departments.map(dept => (
-                            <div key={dept.id} className="bg-white rounded-xl border border-gray-200 p-5 hover:border-violet-200 hover:shadow-sm transition-all">
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="w-9 h-9 rounded-lg bg-violet-50 flex items-center justify-center shrink-0">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                        {departments.map(dept => {
+                            const initials = (dept.departmentName || 'D').slice(0, 2).toUpperCase();
+                            const palettes = [
+                                { bg: 'bg-violet-100', text: 'text-violet-700' },
+                                { bg: 'bg-blue-100',   text: 'text-blue-700'   },
+                                { bg: 'bg-green-100',  text: 'text-green-700'  },
+                                { bg: 'bg-amber-100',  text: 'text-amber-700'  },
+                                { bg: 'bg-rose-100',   text: 'text-rose-700'   },
+                                { bg: 'bg-cyan-100',   text: 'text-cyan-700'   },
+                            ];
+                            const pal = palettes[(dept.departmentName?.charCodeAt(0) || 0) % palettes.length];
+
+                            return (
+                                <div key={dept.id} className="bg-white rounded-2xl border border-gray-100 overflow-hidden hover:border-blue-200 hover:shadow-md transition-all flex flex-col">
+                                    <div className="p-4 flex-1">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-medium text-lg shrink-0 ${pal.bg} ${pal.text}`}>
+                                                {initials}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="text-sm font-semibold text-gray-800 leading-tight truncate">{dept.departmentName}</h3>
+                                            </div>
+                                            <button onClick={() => openEdit(dept)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">{dept.description || 'No description available for this department.'}</p>
                                     </div>
-                                    <button onClick={() => openEdit(dept)} className="text-xs text-violet-500 hover:text-violet-700 font-medium">Edit</button>
+                                    <div className="p-3 border-t border-gray-100">
+                                        <button
+                                            onClick={() => navigate(`/school/departments/${encodeURIComponent(dept.departmentName)}/teachers`)}
+                                            className="w-full text-xs text-center border border-gray-200 bg-white hover:bg-blue-50 text-blue-600 font-medium py-2 rounded-lg transition-colors flex justify-center items-center gap-1.5"
+                                        >
+                                            View Department
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                                        </button>
+                                    </div>
                                 </div>
-                                <p className="font-semibold text-gray-800 text-sm">{dept.departmentName}</p>
-                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{dept.description || 'No description'}</p>
-                                <button
-                                    onClick={() => navigate(`/school/departments/${encodeURIComponent(dept.departmentName)}/teachers`)}
-                                    className="mt-4 w-full text-xs text-center bg-violet-50 hover:bg-violet-100 text-violet-700 font-medium py-1.5 rounded-lg transition-colors"
-                                >
-                                    View Department
-                                </button>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 )}
             </div>

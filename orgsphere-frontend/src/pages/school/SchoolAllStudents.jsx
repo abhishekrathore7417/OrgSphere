@@ -33,8 +33,12 @@ const SchoolAllStudents = () => {
                 schoolApi.getStudentsByOrganization(orgId),
                 schoolApi.getClassroomsByOrganization(orgId),
             ]);
-            setStudents(stuRes.status   === 'fulfilled' ? (stuRes.value.data.data  || []) : []);
-            setClassrooms(clsRes.status === 'fulfilled' ? (clsRes.value.data.data  || []) : []);
+            const allStudents   = stuRes.status   === 'fulfilled' ? (stuRes.value.data.data  || []) : [];
+            const allClassrooms = clsRes.status === 'fulfilled' ? (clsRes.value.data.data  || []) : [];
+            // Only ACTIVE students shown everywhere
+            setStudents(allStudents.filter(s => s.status === 'ACTIVE'));
+            // Only ACTIVE classrooms in dropdown
+            setClassrooms(allClassrooms.filter(c => c.status === 'ACTIVE'));
         } catch { toast.error('Failed to load students'); }
         finally { setLoading(false); }
     };

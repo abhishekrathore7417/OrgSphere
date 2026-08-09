@@ -42,6 +42,11 @@ import SchoolAllStudents from './pages/school/SchoolAllStudents';
 import SchoolAllTeachers from './pages/school/SchoolAllTeachers';
 import SchoolAllFees from './pages/school/SchoolAllFees';
 
+// New School Pages
+import FeeStructure from './pages/school/FeeStructure';
+import AcademicYear from './pages/school/AcademicYear';
+import Announcements from './pages/school/Announcements';
+
 function App() {
     return (
         <Router>
@@ -83,6 +88,9 @@ function App() {
                     <Route path="/school/settings" element={<SchoolLayout><SettingsPage /></SchoolLayout>} />
 
                     {/* ERP features locked when subscription is expired */}
+                    <Route path="/school/fee-structure" element={<SubscriptionLockGuard><FeeStructure /></SubscriptionLockGuard>} />
+                    <Route path="/school/academic-year" element={<SubscriptionLockGuard><AcademicYear /></SubscriptionLockGuard>} />
+                    <Route path="/school/announcements" element={<SubscriptionLockGuard><Announcements /></SubscriptionLockGuard>} />
                     <Route path="/school/all-students" element={<SubscriptionLockGuard><SchoolAllStudents /></SubscriptionLockGuard>} />
                     <Route path="/school/all-teachers" element={<SubscriptionLockGuard><SchoolAllTeachers /></SubscriptionLockGuard>} />
                     <Route path="/school/all-fees"     element={<SubscriptionLockGuard><SchoolAllFees /></SubscriptionLockGuard>} />

@@ -3,32 +3,119 @@ import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
-import DashboardLayout from '../../components/layout/DashboardLayout';
 import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
-
-const buildNav = (classroomId) => [
-    { path: '/school/dashboard',  label: 'Dashboard',  icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
-    { path: '/school/classrooms', label: 'Classrooms', icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg> },
-    { path: `/school/classrooms/${classroomId}/students`,   label: 'Students',   icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg> },
-    { path: `/school/classrooms/${classroomId}/attendance`, label: 'Attendance', icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { path: `/school/classrooms/${classroomId}/fees`,       label: 'Fees',       icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-    { path: `/school/classrooms/${classroomId}/leaves`,     label: 'Leaves',     icon: <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg> },
-];
 
 const F = ({ label, children }) => <div><label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>{children}</div>;
 const Input  = (props) => <input   {...props} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />;
 const Select = ({ children, ...props }) => <select {...props} className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400">{children}</select>;
 
 const STATUS_STYLE = {
-    PAID:    'bg-green-50 text-green-700 border-green-100',
-    PENDING: 'bg-amber-50 text-amber-600 border-amber-100',
-    OVERDUE: 'bg-red-50 text-red-600 border-red-100',
-    PARTIAL: 'bg-violet-50 text-violet-600 border-violet-100',
-    WAIVED:  'bg-gray-50 text-gray-500 border-gray-100',
+    PAID:    'bg-green-50 text-green-700 border-green-200',
+    PENDING: 'bg-amber-50 text-amber-600 border-amber-200',
+    OVERDUE: 'bg-red-50 text-red-600 border-red-200',
+    PARTIAL: 'bg-violet-50 text-violet-600 border-violet-200',
+    WAIVED:  'bg-gray-50 text-gray-500 border-gray-200',
 };
 
-const EMPTY_FEE = { feeType: 'TUITION', amount: '', dueDate: '', description: '', studentId: '' };
+const OVERALL_STATUS_STYLE = {
+    PAID:    'bg-green-50 text-green-700 border border-green-200 font-semibold',
+    PENDING: 'bg-amber-50 text-amber-700 border border-amber-200 font-semibold',
+    OVERDUE: 'bg-red-50 text-red-700 border border-red-200 font-semibold',
+};
+
+const EMPTY_FEE = { feeType: 'SCHOOL', amount: '', dueDate: '', description: '', studentId: '' };
+
+/* ── StudentFeeCard ── */
+function StudentFeeCard({ sg, pal, totalFees, totalPaid, totalDue, overallStatus, feesToShow, STATUS_STYLE, openEdit, openPay, handleWaive, loadData }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <div className={`bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden border-l-4 ${pal.border}`}>
+            {/* Header row */}
+            <div className="flex items-center gap-4 px-5 py-4 cursor-pointer select-none hover:bg-gray-50/60 transition-colors" onClick={() => setOpen(o => !o)}>
+                <div className={`w-10 h-10 rounded-full ${pal.bg} ${pal.text} flex items-center justify-center font-bold text-sm shrink-0`}>
+                    {sg.name?.charAt(0)?.toUpperCase() || 'S'}
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{sg.name}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">{sg.fees[0]?.studentId || ''} {sg.rollNumber ? `• Roll No. ${sg.rollNumber}` : ''}</p>
+                </div>
+                <div className="hidden sm:flex items-center gap-8 text-center">
+                    <div>
+                        <p className="text-xs text-gray-400">Total Fees</p>
+                        <p className="text-sm font-semibold text-gray-700">₹{totalFees.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400">Paid Amount</p>
+                        <p className="text-sm font-semibold text-green-600">₹{totalPaid.toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p className="text-xs text-gray-400">Due Amount</p>
+                        <p className="text-sm font-semibold text-red-500">₹{totalDue.toLocaleString()}</p>
+                    </div>
+                </div>
+                <span className={`px-2.5 py-0.5 rounded-full text-[11px] ${OVERALL_STATUS_STYLE[overallStatus] || OVERALL_STATUS_STYLE.PENDING}`}>
+                    {overallStatus}
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+            </div>
+
+            {/* Expanded detail */}
+            {open && (
+                <div className="border-t border-gray-100">
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="bg-gray-50 border-b border-gray-100">
+                                    {['Fee Type', 'Due Amount', 'Paid Amount', 'Balance', 'Due Date', 'Status', 'Payment Date', 'Actions'].map(h => (
+                                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-50">
+                                {feesToShow.map(fee => (
+                                    <tr key={fee.id} className="hover:bg-gray-50/50 transition-colors">
+                                        <td className="px-4 py-3 text-sm font-medium text-gray-700">{fee.feeType}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-600">₹{fee.amount}</td>
+                                        <td className="px-4 py-3 text-sm text-green-600 font-medium">₹{fee.paidAmount || 0}</td>
+                                        <td className="px-4 py-3 text-sm text-red-500 font-medium">₹{fee.remainingAmount || 0}</td>
+                                        <td className="px-4 py-3 text-sm text-gray-500">{fee.dueDate || '—'}</td>
+                                        <td className="px-4 py-3">
+                                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_STYLE[fee.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                                                {fee.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-3 text-sm text-gray-500">{fee.paymentDate || '—'}</td>
+                                        <td className="px-4 py-3">
+                                            <div className="flex items-center gap-1.5">
+                                                <button onClick={() => openEdit(fee)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-violet-600 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                </button>
+                                                {fee.status !== 'PAID' && fee.status !== 'WAIVED' && (
+                                                    <button onClick={() => openPay(fee)} title="Record Payment" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div className="px-5 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        {feesToShow[0]?.createdAt ? `Record Created: ${feesToShow[0].createdAt}` : `${feesToShow.length} fee record(s)`}
+                        {feesToShow[0]?.createdByName && (
+                            <><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>Created By: {feesToShow[0].createdByName}</>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
 
 const Fees = () => {
     const { classroomId } = useParams();
@@ -51,6 +138,8 @@ const Fees = () => {
     const [selectedFee, setSelectedFee] = useState(null);
     const [payAmount, setPayAmount]     = useState('');
     const [form, setForm]               = useState(EMPTY_FEE);
+    const [search, setSearch]           = useState('');
+    const [statusFilter, setStatusFilter] = useState('ALL');
 
     useEffect(() => { loadData(); }, [classroomId]);
 
@@ -68,28 +157,21 @@ const Fees = () => {
                     : schoolApi.getStudentsByOrganization(orgId),
             ]);
             const classStudents = studRes.data.data || [];
-            // Filter fees — only show fees for students in THIS classroom
             const classroomStudentUserIds = new Set(classStudents.map(s => s.userId));
             const allFees = feesRes.data.data || [];
             setFees(allFees.filter(fee => classroomStudentUserIds.has(fee.studentId)));
-            setStudents(classStudents.map(s => ({ id: s.userId, name: s.userFullName })));
+            setStudents(classStudents.map(s => ({ id: s.userId, name: s.userFullName, rollNumber: s.rollNumber })));
         } catch { toast.error('Failed to fetch fee data'); }
         finally { setLoading(false); }
     };
 
-    // ── Add Fee ──────────────────────────────────────────────
     const openAdd = () => { setForm(EMPTY_FEE); setAddModal(true); };
 
     const handleAddSubmit = async (e) => {
         e.preventDefault();
         setSaving(true);
         try {
-            await schoolApi.createFee({
-                ...form,
-                amount:         parseFloat(form.amount),
-                studentId:      parseInt(form.studentId),
-                organizationId: parseInt(orgId),
-            });
+            await schoolApi.createFee({ ...form, amount: parseFloat(form.amount), studentId: parseInt(form.studentId), organizationId: parseInt(orgId) });
             toast.success('Fee record created successfully');
             setAddModal(false);
             loadData();
@@ -97,16 +179,9 @@ const Fees = () => {
         finally { setSaving(false); }
     };
 
-    // ── Edit Fee ─────────────────────────────────────────────
     const openEdit = (fee) => {
         setEditingId(fee.id);
-        setForm({
-            feeType:     fee.feeType     || 'TUITION',
-            amount:      fee.amount      || '',
-            dueDate:     fee.dueDate     || '',
-            description: fee.description || '',
-            studentId:   fee.studentId   || '',
-        });
+        setForm({ feeType: fee.feeType || 'SCHOOL', amount: fee.amount || '', dueDate: fee.dueDate || '', description: fee.description || '', studentId: fee.studentId || '' });
         setEditModal(true);
     };
 
@@ -114,12 +189,7 @@ const Fees = () => {
         e.preventDefault();
         setSaving(true);
         try {
-            await schoolApi.updateFee(editingId, {
-                ...form,
-                amount:         parseFloat(form.amount),
-                studentId:      parseInt(form.studentId),
-                organizationId: parseInt(orgId),
-            });
+            await schoolApi.updateFee(editingId, { ...form, amount: parseFloat(form.amount), studentId: parseInt(form.studentId), organizationId: parseInt(orgId) });
             toast.success('Fee updated successfully');
             setEditModal(false);
             loadData();
@@ -127,7 +197,6 @@ const Fees = () => {
         finally { setSaving(false); }
     };
 
-    // ── Pay Fee ──────────────────────────────────────────────
     const openPay = (fee) => { setSelectedFee(fee); setPayAmount(''); setPayModal(true); };
 
     const handlePaySubmit = async (e) => {
@@ -143,9 +212,16 @@ const Fees = () => {
         finally { setSaving(false); }
     };
 
-    const label = classroom?.classroomName || `Classroom #${classroomId}`;
+    const handleWaive = async (feeId) => {
+        if (!window.confirm('Are you sure you want to waive this fee?')) return;
+        try {
+            await schoolApi.waiveFee(feeId);
+            toast.success('Fee waived successfully');
+            loadData();
+        } catch (err) { toast.error(err?.response?.data?.message || 'Failed to waive fee'); }
+    };
 
-    // ── FeeForm JSX inline (no inner component — avoids re-mount & focus loss) ──
+    const label = classroom?.classroomName || `Classroom #${classroomId}`;
 
     return (
         <SchoolLayout>
@@ -158,8 +234,8 @@ const Fees = () => {
 
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-lg font-semibold text-gray-800">Fee Management — {label}</h2>
-                        <p className="text-sm text-gray-400 mt-0.5">Track and manage student fee records</p>
+                        <h2 className="text-lg font-semibold text-gray-800">Fee Collection — {label}</h2>
+                        <p className="text-sm text-gray-400 mt-0.5">Student-wise fee records</p>
                     </div>
                     <button onClick={openAdd} className="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-1.5">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
@@ -167,47 +243,104 @@ const Fees = () => {
                     </button>
                 </div>
 
+                {/* Summary cards */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    {[
+                        { label: 'Total Students', value: students.length, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', bg: 'bg-blue-50', color: 'text-blue-600', display: students.length },
+                        { label: 'Total Collected', value: fees.reduce((s, f) => s + (f.paidAmount || 0), 0), icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z', bg: 'bg-green-50', color: 'text-green-600', display: `₹${fees.reduce((s, f) => s + (f.paidAmount || 0), 0).toLocaleString()}` },
+                        { label: 'Total Due', value: fees.reduce((s, f) => s + (f.remainingAmount || 0), 0), icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', bg: 'bg-amber-50', color: 'text-amber-600', display: `₹${fees.reduce((s, f) => s + (f.remainingAmount || 0), 0).toLocaleString()}` },
+                        { label: 'Total Receipts', value: fees.length, icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', bg: 'bg-violet-50', color: 'text-violet-600', display: fees.length },
+                    ].map(card => (
+                        <div key={card.label} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm flex items-center gap-3">
+                            <div className={`w-10 h-10 rounded-xl ${card.bg} ${card.color} flex items-center justify-center`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d={card.icon} /></svg>
+                            </div>
+                            <div>
+                                <p className="text-xl font-bold text-gray-800">{card.display}</p>
+                                <p className="text-xs text-gray-400">{card.label}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                    <div className="relative flex-1 max-w-md">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 absolute left-3 top-3 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <input type="text" placeholder="Search by student name, roll no." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-9 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+                    </div>
+                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 w-full sm:w-40 text-gray-700 font-medium">
+                        <option value="ALL">All Status</option>
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID">Paid</option>
+                        <option value="PARTIAL">Partial</option>
+                        <option value="OVERDUE">Overdue</option>
+                        <option value="WAIVED">Waived</option>
+                    </select>
+                </div>
+
                 {loading ? (
                     <div className="flex items-center justify-center h-60"><div className="w-7 h-7 border-[3px] border-violet-600 border-t-transparent rounded-full animate-spin" /></div>
-                ) : fees.length === 0 ? (
-                    <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
-                        <p className="text-sm font-medium text-gray-700">No fee records</p>
-                        <p className="text-xs text-gray-400 mt-1">Click "Add Fee" to create a fee record</p>
-                    </div>
-                ) : (
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                        <table className="w-full">
-                            <thead><tr className="border-b border-gray-100 bg-gray-50">
-                                {['Student','Fee Type','Amount','Paid','Remaining','Due Date','Status','Actions'].map(h => (
-                                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                                ))}
-                            </tr></thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {fees.map(fee => (
-                                    <tr key={fee.id} className="hover:bg-gray-50 transition-colors">
-                                        <td className="px-4 py-3.5 text-sm font-medium text-gray-700">{fee.studentName}</td>
-                                        <td className="px-4 py-3.5 text-sm text-gray-500">{fee.feeType}</td>
-                                        <td className="px-4 py-3.5 text-sm font-semibold text-gray-800">₹{fee.amount}</td>
-                                        <td className="px-4 py-3.5 text-sm text-green-600 font-medium">₹{fee.paidAmount || 0}</td>
-                                        <td className="px-4 py-3.5 text-sm text-red-500 font-medium">₹{fee.remainingAmount || fee.amount}</td>
-                                        <td className="px-4 py-3.5 text-sm text-gray-500">{fee.dueDate}</td>
-                                        <td className="px-4 py-3.5">
-                                            <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_STYLE[fee.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{fee.status}</span>
-                                        </td>
-                                        <td className="px-4 py-3.5">
-                                            <div className="flex items-center gap-2">
-                                                <button onClick={() => openEdit(fee)} className="text-xs text-violet-500 hover:text-violet-700 font-medium">Edit</button>
-                                                {fee.status !== 'PAID' && fee.status !== 'WAIVED' && (
-                                                    <button onClick={() => openPay(fee)} className="text-xs text-green-600 hover:text-green-800 font-medium">Pay</button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                ) : (() => {
+                    const studentMap = {};
+                    students.forEach(s => { studentMap[s.id] = { ...s, fees: [] }; });
+                    fees.forEach(fee => { if (studentMap[fee.studentId]) studentMap[fee.studentId].fees.push(fee); });
+
+                    const studentGroups = Object.values(studentMap).filter(sg => {
+                        if (sg.fees.length === 0) return false;
+                        const matchSearch = !search || sg.name?.toLowerCase().includes(search.toLowerCase()) ||
+                            sg.fees.some(f => f.feeType?.toLowerCase().includes(search.toLowerCase()));
+                        const matchStatus = statusFilter === 'ALL' || sg.fees.some(f => f.status === statusFilter);
+                        return matchSearch && matchStatus;
+                    });
+
+                    if (studentGroups.length === 0) {
+                        return (
+                            <div className="bg-white rounded-xl border border-gray-200 p-16 text-center">
+                                <p className="text-sm font-medium text-gray-700">{fees.length === 0 ? 'No fee records' : 'No fees match filters'}</p>
+                                {fees.length === 0 && <p className="text-xs text-gray-400 mt-1">Click "Add Fee" to create a fee record</p>}
+                            </div>
+                        );
+                    }
+
+                    const colors = [
+                        { border: 'border-l-purple-400', bg: 'bg-purple-100', text: 'text-purple-700' },
+                        { border: 'border-l-green-400',  bg: 'bg-green-100',  text: 'text-green-700'  },
+                        { border: 'border-l-blue-400',   bg: 'bg-blue-100',   text: 'text-blue-700'   },
+                    ];
+
+                    return (
+                        <div className="space-y-3">
+                            <p className="text-xs text-gray-400 mb-1">Showing {studentGroups.length} student{studentGroups.length !== 1 ? 's' : ''}</p>
+                            {studentGroups.map((sg, idx) => {
+                                const pal = colors[idx % colors.length];
+                                const feesToShow  = statusFilter === 'ALL' ? sg.fees : sg.fees.filter(f => f.status === statusFilter);
+                                const totalFees   = sg.fees.reduce((s, f) => s + (f.amount || 0), 0);
+                                const totalPaid   = sg.fees.reduce((s, f) => s + (f.paidAmount || 0), 0);
+                                const totalDue    = sg.fees.reduce((s, f) => s + (f.remainingAmount || 0), 0);
+                                const allPaid     = sg.fees.every(f => f.status === 'PAID' || f.status === 'WAIVED');
+                                const hasOverdue  = sg.fees.some(f => f.status === 'OVERDUE');
+                                const overallStatus = allPaid ? 'PAID' : hasOverdue ? 'OVERDUE' : 'PENDING';
+                                return (
+                                    <StudentFeeCard
+                                        key={sg.id}
+                                        sg={sg}
+                                        pal={pal}
+                                        totalFees={totalFees}
+                                        totalPaid={totalPaid}
+                                        totalDue={totalDue}
+                                        overallStatus={overallStatus}
+                                        feesToShow={feesToShow}
+                                        STATUS_STYLE={STATUS_STYLE}
+                                        openEdit={openEdit}
+                                        openPay={openPay}
+                                        handleWaive={handleWaive}
+                                        loadData={loadData}
+                                    />
+                                );
+                            })}
+                        </div>
+                    );
+                })()}
             </div>
 
             {/* Add Fee Modal */}
@@ -221,7 +354,7 @@ const Fees = () => {
                     </F>
                     <F label="Fee Type *">
                         <Select value={form.feeType} onChange={e => setForm({...form, feeType: e.target.value})}>
-                            <option value="TUITION">Tuition Fee</option>
+                            <option value="SCHOOL">School Fee</option>
                             <option value="EXAM">Exam Fee</option>
                             <option value="LIBRARY">Library Fee</option>
                             <option value="SPORTS">Sports Fee</option>
@@ -253,7 +386,7 @@ const Fees = () => {
                     </F>
                     <F label="Fee Type *">
                         <Select value={form.feeType} onChange={e => setForm({...form, feeType: e.target.value})}>
-                            <option value="TUITION">Tuition Fee</option>
+                            <option value="SCHOOL">School Fee</option>
                             <option value="EXAM">Exam Fee</option>
                             <option value="LIBRARY">Library Fee</option>
                             <option value="SPORTS">Sports Fee</option>
