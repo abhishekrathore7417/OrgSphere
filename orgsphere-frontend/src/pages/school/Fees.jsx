@@ -26,13 +26,11 @@ const OVERALL_STATUS_STYLE = {
 
 const EMPTY_FEE = { feeType: 'SCHOOL', amount: '', dueDate: '', description: '', studentId: '' };
 
-/* ── StudentFeeCard ── */
-function StudentFeeCard({ sg, pal, totalFees, totalPaid, totalDue, overallStatus, feesToShow, STATUS_STYLE, openEdit, openPay, handleWaive, loadData }) {
+function StudentFeeCard({ sg, pal, totalFees, totalPaid, totalDue, overallStatus, feesToShow, STATUS_STYLE, openEdit, openPay, handleWaive }) {
     const [open, setOpen] = useState(false);
 
     return (
         <div className={`bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden border-l-4 ${pal.border}`}>
-            {/* Header row */}
             <div className="flex items-center gap-4 px-5 py-4 cursor-pointer select-none hover:bg-gray-50/60 transition-colors" onClick={() => setOpen(o => !o)}>
                 <div className={`w-10 h-10 rounded-full ${pal.bg} ${pal.text} flex items-center justify-center font-bold text-sm shrink-0`}>
                     {sg.name?.charAt(0)?.toUpperCase() || 'S'}
@@ -42,18 +40,9 @@ function StudentFeeCard({ sg, pal, totalFees, totalPaid, totalDue, overallStatus
                     <p className="text-[11px] text-gray-400 mt-0.5">{sg.fees[0]?.studentId || ''} {sg.rollNumber ? `• Roll No. ${sg.rollNumber}` : ''}</p>
                 </div>
                 <div className="hidden sm:flex items-center gap-8 text-center">
-                    <div>
-                        <p className="text-xs text-gray-400">Total Fees</p>
-                        <p className="text-sm font-semibold text-gray-700">₹{totalFees.toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-400">Paid Amount</p>
-                        <p className="text-sm font-semibold text-green-600">₹{totalPaid.toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p className="text-xs text-gray-400">Due Amount</p>
-                        <p className="text-sm font-semibold text-red-500">₹{totalDue.toLocaleString()}</p>
-                    </div>
+                    <div><p className="text-xs text-gray-400">Total Fees</p><p className="text-sm font-semibold text-gray-700">₹{totalFees.toLocaleString()}</p></div>
+                    <div><p className="text-xs text-gray-400">Paid Amount</p><p className="text-sm font-semibold text-green-600">₹{totalPaid.toLocaleString()}</p></div>
+                    <div><p className="text-xs text-gray-400">Due Amount</p><p className="text-sm font-semibold text-red-500">₹{totalDue.toLocaleString()}</p></div>
                 </div>
                 <span className={`px-2.5 py-0.5 rounded-full text-[11px] ${OVERALL_STATUS_STYLE[overallStatus] || OVERALL_STATUS_STYLE.PENDING}`}>
                     {overallStatus}
@@ -61,55 +50,51 @@ function StudentFeeCard({ sg, pal, totalFees, totalPaid, totalDue, overallStatus
                 <svg xmlns="http://www.w3.org/2000/svg" className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
             </div>
 
-            {/* Expanded detail */}
             {open && (
                 <div className="border-t border-gray-100">
                     <div className="overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="bg-gray-50 border-b border-gray-100">
-                                    {['Fee Type', 'Due Amount', 'Paid Amount', 'Balance', 'Due Date', 'Status', 'Payment Date', 'Actions'].map(h => (
-                                        <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
-                                    ))}
-                                </tr>
+                            <tr className="bg-gray-50 border-b border-gray-100">
+                                {['Fee Type', 'Due Amount', 'Paid Amount', 'Balance', 'Due Date', 'Status', 'Receipt', 'Actions'].map(h => (
+                                    <th key={h} className="px-4 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide">{h}</th>
+                                ))}
+                            </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {feesToShow.map(fee => (
-                                    <tr key={fee.id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="px-4 py-3 text-sm font-medium text-gray-700">{fee.feeType}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-600">₹{fee.amount}</td>
-                                        <td className="px-4 py-3 text-sm text-green-600 font-medium">₹{fee.paidAmount || 0}</td>
-                                        <td className="px-4 py-3 text-sm text-red-500 font-medium">₹{fee.remainingAmount || 0}</td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">{fee.dueDate || '—'}</td>
-                                        <td className="px-4 py-3">
+                            {feesToShow.map(fee => (
+                                <tr key={fee.id} className="hover:bg-gray-50/50 transition-colors">
+                                    <td className="px-4 py-3 text-sm font-medium text-gray-700">{fee.feeType}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-600">₹{fee.amount}</td>
+                                    <td className="px-4 py-3 text-sm text-green-600 font-medium">₹{fee.paidAmount || 0}</td>
+                                    <td className="px-4 py-3 text-sm text-red-500 font-medium">₹{fee.remainingAmount || 0}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-500">{fee.dueDate || '—'}</td>
+                                    <td className="px-4 py-3">
                                             <span className={`inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold border ${STATUS_STYLE[fee.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>
                                                 {fee.status}
                                             </span>
-                                        </td>
-                                        <td className="px-4 py-3 text-sm text-gray-500">{fee.paymentDate || '—'}</td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1.5">
-                                                <button onClick={() => openEdit(fee)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-violet-600 transition-colors">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-500 font-mono">{fee.receiptNumber || '—'}</td>
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-1.5">
+                                            <button onClick={() => openEdit(fee)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-violet-600 transition-colors">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                            </button>
+                                            {fee.status !== 'PAID' && fee.status !== 'WAIVED' && (
+                                                <button onClick={() => openPay(fee)} title="Record Payment" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                                                 </button>
-                                                {fee.status !== 'PAID' && fee.status !== 'WAIVED' && (
-                                                    <button onClick={() => openPay(fee)} title="Record Payment" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-green-50 text-gray-400 hover:text-green-600 transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                             </tbody>
                         </table>
                     </div>
                     <div className="px-5 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center gap-4 text-xs text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                         {feesToShow[0]?.createdAt ? `Record Created: ${feesToShow[0].createdAt}` : `${feesToShow.length} fee record(s)`}
-                        {feesToShow[0]?.createdByName && (
-                            <><svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>Created By: {feesToShow[0].createdByName}</>
-                        )}
                     </div>
                 </div>
             )}
@@ -208,8 +193,12 @@ const Fees = () => {
             toast.success('Payment recorded successfully');
             setPayModal(false);
             loadData();
-        } catch (err) { toast.error(err?.response?.data?.message || 'Failed to record payment'); }
-        finally { setSaving(false); }
+        } catch (err) {
+            const msg = err?.response?.data?.message || 'Failed to record payment';
+            toast.error(msg);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleWaive = async (feeId) => {
@@ -243,7 +232,7 @@ const Fees = () => {
                     </button>
                 </div>
 
-                {/* Summary cards */}
+                {/* Summary cards - unchanged */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                     {[
                         { label: 'Total Students', value: students.length, icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z', bg: 'bg-blue-50', color: 'text-blue-600', display: students.length },
@@ -334,7 +323,6 @@ const Fees = () => {
                                         openEdit={openEdit}
                                         openPay={openPay}
                                         handleWaive={handleWaive}
-                                        loadData={loadData}
                                     />
                                 );
                             })}
@@ -343,7 +331,7 @@ const Fees = () => {
                 })()}
             </div>
 
-            {/* Add Fee Modal */}
+            {/* Modals remain exactly same as original – no change */}
             <Modal open={addModal} onClose={() => setAddModal(false)} title="Add Fee Record">
                 <form onSubmit={handleAddSubmit} className="space-y-4">
                     <F label="Student *">
@@ -375,7 +363,6 @@ const Fees = () => {
                 </form>
             </Modal>
 
-            {/* Edit Fee Modal */}
             <Modal open={editModal} onClose={() => setEditModal(false)} title="Edit Fee Record">
                 <form onSubmit={handleEditSubmit} className="space-y-4">
                     <F label="Student *">
@@ -407,7 +394,6 @@ const Fees = () => {
                 </form>
             </Modal>
 
-            {/* Pay Fee Modal */}
             <Modal open={payModal} onClose={() => setPayModal(false)} title="Record Payment">
                 <form onSubmit={handlePaySubmit} className="space-y-4">
                     {selectedFee && (

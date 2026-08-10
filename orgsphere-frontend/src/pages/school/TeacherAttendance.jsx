@@ -122,18 +122,17 @@ const TeacherAttendance = () => {
                 schoolApi.getTeachersByOrganization(orgId),
             ]);
             const allTeachers = teachersRes.data.data || [];
-            // Filter teachers by dept mapping
+            // Filter teachers by dept mapping AND only ACTIVE
             const deptTeachers = storedIds.length > 0
-                ? allTeachers.filter(t => storedIds.includes(t.id))
-                : []; // empty for new departments
+                ? allTeachers.filter(t => storedIds.includes(t.id) && t.status === 'ACTIVE')
+                : [];
             const deptTeacherUserIds = new Set(deptTeachers.map(t => t.userId));
             setTeachers(deptTeachers.map(t => ({id: t.userId, fullName: t.userFullName, email: t.userEmail})));
             // Filter attendance to only this department's teachers
             const allAtt = attRes.data.data || [];
             setAttendances(allAtt.filter(a => deptTeacherUserIds.has(a.userId)));
-        } catch {
-            console.error("Load Data Error:", err); // <--- Yeh console me error dikhayega
-
+        } catch (err) {
+            console.error("Load Data Error:", err);
             toast.error('Failed to load attendance');
         } finally {
             setLoading(false);

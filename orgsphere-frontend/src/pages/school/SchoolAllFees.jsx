@@ -18,7 +18,6 @@ function computeDueDate(frequency, dueDay, refDate = new Date()) {
     const ot = new Date(); ot.setDate(ot.getDate() + 30); return ot.toISOString().split('T')[0];
 }
 
-
 const STATUS_STYLE = {
     PENDING:  'bg-amber-50 text-amber-600 border-amber-100',
     PAID:     'bg-green-50 text-green-700 border-green-100',
@@ -61,25 +60,20 @@ const SchoolAllFees = () => {
                 schoolApi.getFeeStructuresByOrganization(orgId),
             ]);
             setFees(feeRes.status       === 'fulfilled' ? (feeRes.value.data.data  || []) : []);
-            // Only ACTIVE classrooms
             const allCls = clsRes.status === 'fulfilled' ? (clsRes.value.data.data  || []) : [];
             const activeCls = allCls.filter(c => c.status === 'ACTIVE');
             setClassrooms(activeCls);
-            // Only ACTIVE students from ACTIVE classrooms
             const allStu = stuRes.status === 'fulfilled' ? (stuRes.value.data.data  || []) : [];
-            const activeStuIds = new Set(allStu.filter(s => s.status === 'ACTIVE').map(s => s.userId));
             setStudents(allStu.filter(s => s.status === 'ACTIVE'));
             setStructures(strRes.status === 'fulfilled' ? (strRes.value.data.data  || []) : []);
         } catch { toast.error('Failed to load fees'); }
         finally { setLoading(false); }
     };
 
-    // Enrich fees — only ACTIVE students ki fees show karo
     const enriched = fees
         .filter(f => {
-            // Student ACTIVE hai ya nahi check karo
             const student = students.find(s => s.userId === f.studentId);
-            return !!student; // agar student state mein hai (ACTIVE only) to show karo
+            return !!student;
         })
         .map(f => {
             const student  = students.find(s => s.userId === f.studentId);
@@ -87,7 +81,7 @@ const SchoolAllFees = () => {
                 ? classrooms.find(c =>
                     c.classroomName === student.className ||
                     c.classroomName?.toLowerCase() === student.className?.toLowerCase()
-                  )
+                )
                 : null;
             return {
                 ...f,
@@ -97,7 +91,6 @@ const SchoolAllFees = () => {
             };
         });
 
-    /* ── Generate Fees ── */
     const handleGenerateFees = async () => {
         if (structures.length === 0) { toast.warn('No fee structures defined. Go to Fee Structure page first.'); return; }
         setGenerating(true); setGenResult(null);
@@ -144,7 +137,10 @@ const SchoolAllFees = () => {
             setPaying(null);
             setPayAmount('');
             load();
-        } catch (err) { toast.error(err?.response?.data?.message || 'Payment failed'); }
+        } catch (err) {
+            const msg = err?.response?.data?.message || 'Payment failed';
+            toast.error(msg);
+        }
     };
 
     const handleWaive = async (feeId) => {
@@ -173,7 +169,6 @@ const SchoolAllFees = () => {
     return (
         <SchoolLayout>
             <div className="p-6 max-w-7xl mx-auto space-y-5">
-                {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
                     <button onClick={() => navigate('/school/dashboard')} className="hover:text-violet-600">Dashboard</button>
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
@@ -187,7 +182,7 @@ const SchoolAllFees = () => {
                     </div>
                     <div className="flex items-center gap-3">
                         <button onClick={() => { setGenResult(null); setGenModal(true); }}
-                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors">
+                                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                             Generate Fees
                         </button>
@@ -195,7 +190,6 @@ const SchoolAllFees = () => {
                     </div>
                 </div>
 
-                {/* Stats */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     {[
                         { label: 'Total Records', value: fees.length,   color: 'bg-violet-50 text-violet-700 border-violet-100', f: 'ALL'     },
@@ -204,14 +198,13 @@ const SchoolAllFees = () => {
                         { label: 'Overdue',        value: overdue,       color: 'bg-red-50 text-red-700 border-red-100',          f: 'OVERDUE' },
                     ].map(s => (
                         <button key={s.label} onClick={() => setFilter(s.f)}
-                            className={`${s.color} border rounded-2xl px-4 py-3 text-left transition-all ${filter === s.f ? 'ring-2 ring-offset-1 ring-violet-400 shadow-sm' : 'hover:shadow-sm'}`}>
+                                className={`${s.color} border rounded-2xl px-4 py-3 text-left transition-all ${filter === s.f ? 'ring-2 ring-offset-1 ring-violet-400 shadow-sm' : 'hover:shadow-sm'}`}>
                             <p className="text-2xl font-extrabold">{s.value}</p>
                             <p className="text-xs font-medium mt-0.5 opacity-80">{s.label}</p>
                         </button>
                     ))}
                 </div>
 
-                {/* Total collected banner */}
                 {totalAmt > 0 && (
                     <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl px-5 py-4 text-white flex items-center justify-between">
                         <div>
@@ -225,24 +218,22 @@ const SchoolAllFees = () => {
                     </div>
                 )}
 
-                {/* Filters */}
                 <div className="flex gap-3 flex-wrap items-center">
                     <input value={search} onChange={e => setSearch(e.target.value)}
-                        placeholder="Search student, fee type, classroom..."
-                        className="border border-gray-200 rounded-xl px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-violet-400" />
+                           placeholder="Search student, fee type, classroom..."
+                           className="border border-gray-200 rounded-xl px-4 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-violet-400" />
                     <div className="flex gap-2 flex-wrap">
                         {['ALL','PENDING','PAID','OVERDUE','PARTIAL','WAIVED'].map(s => (
                             <button key={s} onClick={() => setFilter(s)}
-                                className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
-                                    filter === s
-                                        ? 'bg-violet-600 text-white border-violet-600'
-                                        : 'bg-white text-gray-500 border-gray-200 hover:border-violet-300'
-                                }`}>{s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}</button>
+                                    className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                                        filter === s
+                                            ? 'bg-violet-600 text-white border-violet-600'
+                                            : 'bg-white text-gray-500 border-gray-200 hover:border-violet-300'
+                                    }`}>{s === 'ALL' ? 'All' : s.charAt(0) + s.slice(1).toLowerCase()}</button>
                         ))}
                     </div>
                 </div>
 
-                {/* Table */}
                 {loading ? (
                     <div className="flex justify-center h-60 items-center">
                         <div className="w-7 h-7 border-[3px] border-violet-600 border-t-transparent rounded-full animate-spin" />
@@ -256,61 +247,62 @@ const SchoolAllFees = () => {
                     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-gray-50 bg-gray-50/60">
-                                    {['Student','Classroom','Fee Type','Amount','Paid','Due Date','Status','Action'].map(h => (
-                                        <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
-                                    ))}
-                                </tr>
+                            <tr className="border-b border-gray-50 bg-gray-50/60">
+                                {['Student','Classroom','Fee Type','Amount','Paid','Due Date','Status','Receipt','Action'].map(h => (
+                                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide">{h}</th>
+                                ))}
+                            </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-50">
-                                {filtered.map(f => (
-                                    <tr key={f.id} className="hover:bg-violet-50/30 transition-colors">
-                                        <td className="px-4 py-3.5 text-sm font-medium text-gray-800">{f.studentName}</td>
-                                        <td className="px-4 py-3.5">
-                                            {f.classroomId ? (
-                                                <button onClick={() => navigate(`/school/classrooms/${f.classroomId}/fees`)}
+                            {filtered.map(f => (
+                                <tr key={f.id} className="hover:bg-violet-50/30 transition-colors">
+                                    <td className="px-4 py-3.5 text-sm font-medium text-gray-800">{f.studentName}</td>
+                                    <td className="px-4 py-3.5">
+                                        {f.classroomId ? (
+                                            <button onClick={() => navigate(`/school/classrooms/${f.classroomId}/fees`)}
                                                     className="text-xs bg-indigo-50 text-indigo-700 border border-indigo-100 px-2.5 py-0.5 rounded-full font-semibold hover:bg-indigo-100 transition-colors">
-                                                    {f.classroomName}
-                                                </button>
-                                            ) : <span className="text-gray-300 text-sm">{f.classroomName}</span>}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-sm text-gray-600">{f.feeType || '—'}</td>
-                                        <td className="px-4 py-3.5 text-sm font-semibold text-gray-800">
-                                            {f.amount ? `₹${f.amount.toLocaleString()}` : '—'}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-sm text-green-700 font-semibold">
-                                            {f.paidAmount ? `₹${f.paidAmount.toLocaleString()}` : '—'}
-                                        </td>
-                                        <td className="px-4 py-3.5 text-sm text-gray-500">{f.dueDate || '—'}</td>
-                                        <td className="px-4 py-3.5">
+                                                {f.classroomName}
+                                            </button>
+                                        ) : <span className="text-gray-300 text-sm">{f.classroomName}</span>}
+                                    </td>
+                                    <td className="px-4 py-3.5 text-sm text-gray-600">{f.feeType || '—'}</td>
+                                    <td className="px-4 py-3.5 text-sm font-semibold text-gray-800">
+                                        {f.amount ? `₹${f.amount.toLocaleString()}` : '—'}
+                                    </td>
+                                    <td className="px-4 py-3.5 text-sm text-green-700 font-semibold">
+                                        {f.paidAmount ? `₹${f.paidAmount.toLocaleString()}` : '—'}
+                                    </td>
+                                    <td className="px-4 py-3.5 text-sm text-gray-500">{f.dueDate || '—'}</td>
+                                    <td className="px-4 py-3.5">
                                             <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold border ${STATUS_STYLE[f.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>
                                                 {f.status}
                                             </span>
-                                        </td>
-                                        <td className="px-4 py-3.5">
-                                            <div className="flex gap-2 flex-wrap items-center">
-                                                {(f.status === 'PENDING' || f.status === 'OVERDUE' || f.status === 'PARTIAL') && (
-                                                    <>
-                                                        <button onClick={() => openPay(f)}
+                                    </td>
+                                    <td className="px-4 py-3.5 text-sm text-gray-500 font-mono">{f.receiptNumber || '—'}</td>
+                                    <td className="px-4 py-3.5">
+                                        <div className="flex gap-2 flex-wrap items-center">
+                                            {(f.status === 'PENDING' || f.status === 'OVERDUE' || f.status === 'PARTIAL') && (
+                                                <>
+                                                    <button onClick={() => openPay(f)}
                                                             className="text-[11px] bg-green-50 text-green-700 border border-green-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider hover:bg-green-100 transition-colors">
-                                                            Pay
-                                                        </button>
-                                                        <button onClick={() => handleWaive(f.id)}
-                                                            className="text-[11px] bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider hover:bg-amber-100 transition-colors">
-                                                            Waive
-                                                        </button>
-                                                    </>
-                                                )}
-                                                {f.classroomId && (
-                                                    <button onClick={() => navigate(`/school/classrooms/${f.classroomId}/fees`)}
-                                                        className="text-xs text-violet-600 hover:text-violet-800 font-semibold hover:underline ml-1">
-                                                        View
+                                                        Pay
                                                     </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
+                                                    <button onClick={() => handleWaive(f.id)}
+                                                            className="text-[11px] bg-amber-50 text-amber-600 border border-amber-100 px-2.5 py-1 rounded-md font-bold uppercase tracking-wider hover:bg-amber-100 transition-colors">
+                                                        Waive
+                                                    </button>
+                                                </>
+                                            )}
+                                            {f.classroomId && (
+                                                <button onClick={() => navigate(`/school/classrooms/${f.classroomId}/fees`)}
+                                                        className="text-xs text-violet-600 hover:text-violet-800 font-semibold hover:underline ml-1">
+                                                    View
+                                                </button>
+                                            )}
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
                             </tbody>
                         </table>
                     </div>
@@ -331,18 +323,18 @@ const SchoolAllFees = () => {
                     </div>
                     <div className="flex gap-3 pt-1">
                         <button onClick={() => { setPayModal(false); setPaying(null); }}
-                            className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50">
+                                className="flex-1 border border-gray-200 text-gray-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-gray-50">
                             Cancel
                         </button>
                         <button onClick={handlePay} disabled={!payAmount}
-                            className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-60">
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold py-2.5 rounded-xl disabled:opacity-60">
                             Confirm Payment
                         </button>
                     </div>
                 </div>
             </Modal>
 
-            {/* Generate Fees Modal */}
+            {/* Generate Fees Modal – unchanged */}
             <Modal open={genModal} onClose={() => { if (!generating) setGenModal(false); }} title="Generate Fees for All Students">
                 <div className="space-y-5">
                     {!genResult ? (
@@ -370,12 +362,12 @@ const SchoolAllFees = () => {
                                     <div>
                                         <label className="block text-xs font-medium text-gray-600 mb-1">For Month</label>
                                         <input type="month" value={genMonth} onChange={e => setGenMonth(e.target.value)}
-                                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
+                                               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400" />
                                     </div>
                                     <div className="flex gap-3">
                                         <button onClick={() => setGenModal(false)} disabled={generating} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50 disabled:opacity-50">Cancel</button>
                                         <button onClick={handleGenerateFees} disabled={generating}
-                                            className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
+                                                className="flex-1 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white text-sm font-bold py-2.5 rounded-lg flex items-center justify-center gap-2">
                                             {generating ? <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Generating...</> : <><svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg> Generate Now</>}
                                         </button>
                                     </div>

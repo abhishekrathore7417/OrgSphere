@@ -32,6 +32,9 @@ export const schoolApi = {
     getAllStudents: () =>
         axiosInstance.get('/api/school/students'),
 
+    getStudentsByClassroom: (classroomId) =>
+        axiosInstance.get(`/api/school/students/classroom/${classroomId}`),
+
     // ===== Teacher APIs =====
     createTeacher: (data) =>
         axiosInstance.post('/api/school/teachers', data),
@@ -157,4 +160,13 @@ export const schoolApi = {
         axiosInstance.delete(`/api/school/holidays/${id}`),
     getHolidaysByOrganization: (orgId) =>
         axiosInstance.get(`/api/school/holidays/organization/${orgId}`),
+
+    // ===== School Attendance APIs =====
+    markAttendance: (data) => axiosInstance.post('/api/school/attendances', data),
+    updateAttendance: (id, data) => axiosInstance.put(`/api/school/attendances/${id}`, data),
+    deleteAttendance: (id) => axiosInstance.delete(`/api/school/attendances/${id}`),
+    getAttendanceByOrganization: (orgId) => axiosInstance.get(`/api/school/attendances/organization/${orgId}`),
+    getAttendanceByDate: (orgId, date) => axiosInstance.get(`/api/school/attendances/organization/${orgId}/date?date=${date}`),
+    getAttendanceByStudent: (studentId) => axiosInstance.get(`/api/school/attendances/student/${studentId}`),
+    getAttendanceByClassroom: (classroomId) => axiosInstance.get(`/api/school/attendances/classroom/${classroomId}`),
 };

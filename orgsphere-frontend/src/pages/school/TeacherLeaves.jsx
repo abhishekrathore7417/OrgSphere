@@ -54,8 +54,8 @@ const TeacherLeaves = () => {
             const teachersRes = await schoolApi.getTeachersByOrganization(orgId);
             const allTeachers = teachersRes.data.data || [];
             const deptTeachers = storedIds.length > 0
-                ? allTeachers.filter(t => storedIds.includes(t.id))
-                : []; // empty for new departments
+                ? allTeachers.filter(t => storedIds.includes(t.id) && t.status === 'ACTIVE')
+                : []; // only ACTIVE teachers
             const deptTeacherUserIds = new Set(deptTeachers.map(t => t.userId));
             setTeachers(deptTeachers.map(t => ({ id: t.userId, name: t.userFullName })));
 

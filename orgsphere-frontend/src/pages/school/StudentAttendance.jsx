@@ -41,13 +41,14 @@ export default function StudentAttendance() {
             const c  = cr.data.data;
             setClassroom(c);
 
-            const stuRes = c?.classroomName
-                ? await schoolApi.getStudentsByClass(orgId, c.classroomName)
-                : await schoolApi.getStudentsByOrganization(orgId);
-            const stuList = (stuRes.data.data || []).map(s => ({ userId: s.userId, name: s.userFullName, studentId: s.studentId }));
+            const stuRes = await schoolApi.getStudentsByClassroom(classroomId);
+            // Only ACTIVE students in attendance marking
+            const stuList = (stuRes.data.data || [])
+                .filter(s => s.status === 'ACTIVE')
+                .map(s => ({ userId: s.userId, name: s.userFullName, studentId: s.studentId }));
             setStudents(stuList);
 
-            const attRes  = await companyApi.getAttendanceByOrganization(orgId);
+            const attRes  = await schoolApi.getAttendanceByOrganization(orgId);
             const allAtt  = attRes.data.data || [];
             const stuUserIds = new Set(stuList.map(s => s.userId));
             const filtered = allAtt.filter(a => stuUserIds.has(a.userId));
@@ -121,8 +122,7 @@ export default function StudentAttendance() {
                 try {
                     // Only create, never update (locked after save)
                     if (!entry.existingId) {
-                        await companyApi.markAttendance(payload);
-                    }
+                        await schoolApi.markAttendance(payload);                    }
                     saved++;
                 } catch { failed++; }
             }));

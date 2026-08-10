@@ -56,7 +56,7 @@ const StudentLeaves = () => {
             const stuRes = c?.classroomName
                 ? await schoolApi.getStudentsByClass(orgId, c.classroomName)
                 : await schoolApi.getStudentsByOrganization(orgId);
-            const classStudents = stuRes.data.data || [];
+            const classStudents = (stuRes.data.data || []).filter(s => s.status === 'ACTIVE');
             const studentUserIds = new Set(classStudents.map(s => s.userId));
             setStudents(classStudents.map(s => ({ id: s.userId, name: s.userFullName })));
             // Fetch all leaves then filter to this classroom's students only

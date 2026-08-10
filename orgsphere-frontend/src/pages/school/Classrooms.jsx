@@ -15,7 +15,7 @@ const Select = ({ children, ...props }) => (
 );
 
 const EMPTY = {
-    classroomName: '', classCode: '', section: '', session: '',
+    classroomName: '', section: '', session: '',
     capacity: '', status: 'ACTIVE', classTeacherId: '', classTeacher: '',
 };
 
@@ -59,7 +59,6 @@ const Classrooms = () => {
         setEditingId(c.id);
         setForm({
             classroomName:  c.classroomName  || '',
-            classCode:      c.classCode      || '',
             section:        c.section        || '',
             session:        c.session        || '',   // ← fix: session properly populated
             capacity:       c.capacity       || '',
@@ -75,7 +74,6 @@ const Classrooms = () => {
         setSaving(true);
         const payload = {
             classroomName:  form.classroomName,
-            classCode:      form.classCode,
             section:        form.section,
             session:        form.session,
             capacity:       form.capacity ? parseInt(form.capacity) : null,
@@ -302,19 +300,21 @@ const Classrooms = () => {
 
                                         <div className="space-y-2 px-1 mb-2">
                                             {[
-                                                { label: 'Section',       val: c.section      || '—', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
-                                                { label: 'Class Teacher', val: c.classTeacher || '—', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', color: c.classTeacher ? 'text-gray-800' : 'text-red-500' },
-                                                { label: 'Capacity',      val: c.capacity     || '—', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
-                                                { label: 'Room No.',      val: c.roomNumber   || '—', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-                                                { label: 'Created On',    val: c.createdAt ? new Date(c.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+                                                { label: 'Section',      val: c.section      || '—' },
+                                                { label: 'Session',      val: c.session      || '—' },
+                                                { label: 'Class Teacher',val: c.classTeacher || '—' },
+                                                { label: 'Capacity',     val: c.capacity     || '—' },
+                                                { label: 'Created On',   val: c.createdAt
+                                                        ? new Date(c.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' })
+                                                        : '—' },
                                             ].map(row => (
                                                 <div key={row.label} className="flex items-center text-[13px] text-gray-700">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d={row.icon}/></svg>
-                                                    <span className="w-24 text-gray-600 font-medium">{row.label}:</span>
-                                                    <span className={`truncate flex-1 ${row.color || 'text-gray-800'}`}>{row.val}</span>
+                                                    <span className="w-24 text-gray-500 text-xs font-medium shrink-0">{row.label}:</span>
+                                                    <span className="truncate flex-1 text-gray-800 font-medium">{row.val}</span>
                                                 </div>
                                             ))}
                                         </div>
+
                                     </div>
 
                                     {/* Bottom: Edit + Inactive buttons — same as screenshot */}
@@ -346,29 +346,30 @@ const Classrooms = () => {
             {/* Modal */}
             <Modal open={modal} onClose={() => setModal(false)} title={editingId ? 'Edit Classroom' : 'Add Classroom'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
-                        <F label="Classroom Name *">
-                            <Input required value={form.classroomName}
-                                onChange={e => setForm({...form, classroomName: e.target.value})}
-                                placeholder="e.g. Class 10A" />
-                        </F>
-                        <F label="Class Code *">
-                            <Input required value={form.classCode}
-                                onChange={e => setForm({...form, classCode: e.target.value})}
-                                placeholder="e.g. CLS-10A" />
-                        </F>
-                    </div>
+                    <F label="Classroom Name *">
+                        <Input required value={form.classroomName}
+                               onChange={e => setForm({...form, classroomName: e.target.value})}
+                               placeholder="e.g. Class-10A" />
+                    </F>
+
                     <div className="grid grid-cols-3 gap-3">
                         <F label="Section">
                             <Input value={form.section}
-                                onChange={e => setForm({...form, section: e.target.value})}
-                                placeholder="e.g. A" />
+                                   onChange={e => setForm({...form, section: e.target.value})}
+                                   placeholder="e.g. A" />
                         </F>
-                        <F label="Session">
-                            <Input value={form.session}
-                                onChange={e => setForm({...form, session: e.target.value})}
-                                placeholder="e.g. 2026-27" />
+                        <F label={`Session${editingId ? ' (locked)' : ''}`}>
+                            <input
+                                value={form.session}
+                                readOnly={!!editingId}
+                                onChange={editingId ? undefined : e => setForm({...form, session: e.target.value})}
+                                placeholder="e.g. 2026-27"
+                                style={{ cursor: editingId ? 'not-allowed' : 'text' }}
+                                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400 bg-gray-50"
+                            />
                         </F>
+
+
                         <F label="Capacity">
                             <Input type="number" value={form.capacity}
                                 onChange={e => setForm({...form, capacity: e.target.value})}

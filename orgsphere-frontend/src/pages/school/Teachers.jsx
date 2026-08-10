@@ -122,7 +122,6 @@ const Teachers = () => {
             // Filter teachers by department using localStorage mapping
             const deptKey = `dept_teachers_${orgId}_${decoded}`;
             const storedIds = JSON.parse(localStorage.getItem(deptKey) || '[]');
-            // If no mapping yet show all (first time), else filter
             const filtered = storedIds.length > 0
                 ? all.filter(t => storedIds.includes(t.id))
                 : [];
@@ -371,9 +370,33 @@ const Teachers = () => {
                                                     className={`inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${STATUS_STYLE[t.status] || 'bg-gray-50 text-gray-500 border-gray-100'}`}>{t.status}</span>
                                                 </td>
                                                 <td className="px-4 py-3.5">
-                                                    <button onClick={() => openEdit(t)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                    </button>
+                                                    <div className="flex items-center gap-2">
+                                                        <button onClick={() => openEdit(t)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition-colors">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                        </button>
+                                                        {/* Soft delete toggle */}
+                                                        <button
+                                                            onClick={async () => {
+                                                                const newStatus = t.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+                                                                try {
+                                                                    await schoolApi.updateTeacher(t.id, {
+                                                                        teacherId: t.teacherId, specialization: t.specialization,
+                                                                        qualification: t.qualification, experienceYears: t.experienceYears,
+                                                                        joiningDate: t.joiningDate, status: newStatus,
+                                                                        userId: t.userId, organizationId: parseInt(orgId)
+                                                                    });
+                                                                    toast.success(`Teacher marked as ${newStatus}`);
+                                                                    load();
+                                                                } catch { toast.error('Failed to update status'); }
+                                                            }}
+                                                            className={`text-xs px-2.5 py-1 rounded-lg border font-medium transition-colors ${
+                                                                t.status === 'ACTIVE'
+                                                                    ? 'border-red-100 text-red-500 hover:bg-red-50'
+                                                                    : 'border-green-100 text-green-600 hover:bg-green-50'
+                                                            }`}>
+                                                            {t.status === 'ACTIVE' ? 'Inactive' : 'Active'}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         ))}
