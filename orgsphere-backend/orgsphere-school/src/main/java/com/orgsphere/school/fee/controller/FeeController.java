@@ -88,4 +88,9 @@ public class FeeController {
         List<FeeResponse> fees = feeService.getFeesByDateRange(orgId, startDate, endDate);
         return ApiResponse.success("Fees fetched successfully", fees);
     }
+    @PostMapping("/generate/classroom/{classroomId}")
+    public ApiResponse generateForClassroom(@PathVariable Long classroomId) {
+        List<FeeResponse> fees = feeService.generateFeesForClassroom(classroomId);
+        return ApiResponse.success("Fees generated for classroom", fees);
+    }
 }

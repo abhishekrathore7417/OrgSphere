@@ -3,6 +3,7 @@ package com.orgsphere.school.fee.entity;
 import com.orgsphere.common.entity.BaseEntity;
 import com.orgsphere.common.enums.FeeStatus;
 import com.orgsphere.organization.entity.Organization;
+import com.orgsphere.school.classroom.entity.Classroom;
 import com.orgsphere.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -51,4 +52,13 @@ public class Fee extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "classroom_id")
+    private Classroom classroom;
+
+    @Column(name = "receipt_number", unique = true)
+    private String receiptNumber;
+
+
 }

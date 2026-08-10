@@ -30,4 +30,9 @@ public interface ClassroomRepository extends JpaRepository<Classroom, Long> {
     boolean existsByClassCodeAndOrganization(String classCode, Organization organization);
 
     boolean existsByClassroomNameAndOrganization(String classroomName, Organization organization);
+
+    // session-aware unique checks — same classCode/name allowed in different sessions
+    boolean existsByClassCodeAndOrganizationAndSession(String classCode, Organization organization, String session);
+
+    boolean existsByClassroomNameAndOrganizationAndSession(String classroomName, Organization organization, String session);
 }

@@ -28,4 +28,6 @@ public class FeeResponse {
     private String studentEmail;
     private Long organizationId;
     private String organizationName;
+    private Long classroomId;
+    private String receiptNumber;
 }

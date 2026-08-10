@@ -30,18 +30,31 @@ public class ClassroomServiceImpl implements ClassroomService {
         Organization organization = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
-        // org-level unique check — same code/name allowed in different organizations
-        if (classroomRepository.existsByClassCodeAndOrganization(request.getClassCode(), organization)) {
-            throw new BadRequestException("Class code already exists in this organization: " + request.getClassCode());
+        // classCode is auto-generated — no need to check uniqueness for it
+        // Only classroomName needs uniqueness check per org + session
+        if (request.getSession() != null && !request.getSession().isBlank()) {
+            if (classroomRepository.existsByClassroomNameAndOrganizationAndSession(
+                    request.getClassroomName(), organization, request.getSession())) {
+                throw new BadRequestException("Classroom '" + request.getClassroomName()
+                        + "' already exists in session " + request.getSession());
+            }
+        } else {
+            if (classroomRepository.existsByClassroomNameAndOrganization(
+                    request.getClassroomName(), organization)) {
+                throw new BadRequestException("Classroom name already exists: " + request.getClassroomName());
+            }
         }
 
-        if (classroomRepository.existsByClassroomNameAndOrganization(request.getClassroomName(), organization)) {
-            throw new BadRequestException("Classroom name already exists in this organization: " + request.getClassroomName());
-        }
+        // Auto-generate classCode: CLS-{classroomName}-{session}-{timestamp}
+        String sessionPart = (request.getSession() != null && !request.getSession().isBlank())
+                ? request.getSession().replaceAll("[^a-zA-Z0-9]", "")
+                : String.valueOf(java.time.Year.now().getValue());
+        String namePart = request.getClassroomName().replaceAll("[^a-zA-Z0-9]", "").toUpperCase();
+        String autoCode = "CLS-" + namePart + "-" + sessionPart + "-" + (System.currentTimeMillis() % 10000);
 
         Classroom classroom = Classroom.builder()
                 .classroomName(request.getClassroomName())
-                .classCode(request.getClassCode())
+                .classCode(autoCode)
                 .section(request.getSection())
                 .session(request.getSession())
                 .capacity(request.getCapacity())
@@ -83,9 +96,39 @@ public class ClassroomServiceImpl implements ClassroomService {
         Classroom classroom = classroomRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + id));
 
+        // ========== SESSION LOCK - START ==========
+        // Prevent changing session after classroom is created
+        if (request.getSession() != null && !request.getSession().equals(classroom.getSession())) {
+            throw new BadRequestException("Session cannot be changed once the classroom is created.");
+        }
+        // ========== SESSION LOCK - END ==========
+
+        // If name or session is changing, check for conflicts with other ACTIVE classrooms
+        boolean nameChanging    = !classroom.getClassroomName().equalsIgnoreCase(request.getClassroomName());
+        boolean sessionChanging = request.getSession() != null
+                && !request.getSession().equals(classroom.getSession());
+
+        if (nameChanging || sessionChanging) {
+            String checkSession = request.getSession() != null ? request.getSession() : classroom.getSession();
+            String checkName    = request.getClassroomName();
+            boolean conflict = classroomRepository
+                    .findByOrganization(classroom.getOrganization())
+                    .stream()
+                    .filter(c -> !c.getId().equals(id)) // exclude self
+                    .anyMatch(c -> c.getClassroomName().equalsIgnoreCase(checkName)
+                            && checkSession.equals(c.getSession())
+                            && c.getStatus() != null
+                            && "ACTIVE".equals(c.getStatus().name()));
+            if (conflict) {
+                throw new BadRequestException("Classroom '" + checkName
+                        + "' already exists as ACTIVE in session " + checkSession);
+            }
+        }
+
         classroom.setClassroomName(request.getClassroomName());
         classroom.setSection(request.getSection());
-        classroom.setSession(request.getSession());
+        // classroom.setSession(request.getSession()); // <--- REMOVED this line to lock session
+
         classroom.setCapacity(request.getCapacity());
         classroom.setClassTeacher(request.getClassTeacher());
         classroom.setClassTeacherId(request.getClassTeacherId());
@@ -146,6 +189,8 @@ public class ClassroomServiceImpl implements ClassroomService {
                 .status(classroom.getStatus().name())
                 .organizationId(classroom.getOrganization().getId())
                 .organizationName(classroom.getOrganization().getOrganizationName())
+                .createdAt(classroom.getCreatedAt())
                 .build();
+
     }
 }

@@ -2,6 +2,7 @@ package com.orgsphere.school.student.repository;
 
 import com.orgsphere.common.enums.StudentStatus;
 import com.orgsphere.organization.entity.Organization;
+import com.orgsphere.school.classroom.entity.Classroom;
 import com.orgsphere.school.student.entity.Student;
 import com.orgsphere.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,4 +30,12 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
 
     // org-level unique — same studentId allowed in different organizations
     boolean existsByStudentIdAndOrganization(String studentId, Organization organization);
+
+    // session-aware: same studentId allowed in different sessions (different className = different session)
+    boolean existsByStudentIdAndOrganizationAndClassName(String studentId, Organization organization, String className);
+    // Fetch students by className AND session — prevents cross-session data leak
+    List<Student> findByOrganizationAndClassNameAndSession(Organization organization, String className, String session);
+    List<Student> findByClassroomId(Long classroomId);
+    List<Student> findByClassroomAndStatus(Classroom classroom, StudentStatus status);
+
 }

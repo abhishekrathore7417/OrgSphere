@@ -1,4 +1,6 @@
 package com.orgsphere.school.classroom.dto;
+import java.time.LocalDateTime;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,4 +24,6 @@ public class ClassroomResponse {
     private String status;
     private Long organizationId;
     private String organizationName;
+    private LocalDateTime createdAt;
+
 }

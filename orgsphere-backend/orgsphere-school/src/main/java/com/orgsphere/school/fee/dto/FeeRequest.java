@@ -41,4 +41,6 @@ public class FeeRequest {
 
     @NotNull(message = "Organization ID is required")
     private Long organizationId;
+
+    private Long classroomId;
 }

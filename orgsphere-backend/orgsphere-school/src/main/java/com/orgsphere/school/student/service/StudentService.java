@@ -26,4 +26,5 @@ public interface StudentService {
     List<StudentResponse> getStudentsByClassAndSection(Long organizationId, String className, String section);
 
     List<StudentResponse> getAllStudents();
+    List<StudentResponse> getStudentsByClassroom(Long classroomId);
 }

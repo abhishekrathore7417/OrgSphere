@@ -3,6 +3,7 @@ package com.orgsphere.school.student.entity;
 import com.orgsphere.common.entity.BaseEntity;
 import com.orgsphere.common.enums.StudentStatus;
 import com.orgsphere.organization.entity.Organization;
+import com.orgsphere.school.classroom.entity.Classroom;
 import com.orgsphere.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,6 +42,9 @@ public class Student extends BaseEntity {
     @Column(name = "guardian_email")
     private String guardianEmail;
 
+    @Column(name = "session")
+    private String session;  // e.g. "2025-26"
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StudentStatus status;
@@ -55,4 +59,8 @@ public class Student extends BaseEntity {
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "organization_id", nullable = false)
     private Organization organization;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "classroom_id")
+    private Classroom classroom;
 }

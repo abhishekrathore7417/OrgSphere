@@ -14,8 +14,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class StudentRequest {
-
-    @NotBlank(message = "Student ID is required")
     private String studentId;
 
     @NotNull(message = "Admission date is required")
@@ -34,6 +32,8 @@ public class StudentRequest {
 
     private String guardianEmail;
 
+    private String session;  // e.g. "2025-26" — auto-filled from classroom
+
     private String status;
 
     @NotNull(message = "User ID is required")
@@ -43,4 +43,6 @@ public class StudentRequest {
     private Long organizationId;
 
     private String optionalFeeTypes;
+
+    private Long classroomId;
 }

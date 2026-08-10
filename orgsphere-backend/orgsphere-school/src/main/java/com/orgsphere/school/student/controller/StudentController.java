@@ -79,4 +79,10 @@ public class StudentController {
         List<StudentResponse> students = studentService.getAllStudents();
         return ApiResponse.success("All students fetched successfully", students);
     }
+
+    @GetMapping("/classroom/{classroomId}")
+    public ApiResponse getStudentsByClassroom(@PathVariable Long classroomId) {
+        List<StudentResponse> students = studentService.getStudentsByClassroom(classroomId);
+        return ApiResponse.success("Students fetched successfully", students);
+    }
 }

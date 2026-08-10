@@ -5,6 +5,8 @@ import com.orgsphere.common.exception.BadRequestException;
 import com.orgsphere.common.exception.ResourceNotFoundException;
 import com.orgsphere.organization.entity.Organization;
 import com.orgsphere.organization.repository.OrganizationRepository;
+import com.orgsphere.school.classroom.entity.Classroom;
+import com.orgsphere.school.classroom.repository.ClassroomRepository;
 import com.orgsphere.school.student.dto.StudentRequest;
 import com.orgsphere.school.student.dto.StudentResponse;
 import com.orgsphere.school.student.entity.Student;
@@ -26,6 +28,7 @@ public class StudentServiceImpl implements StudentService {
     private final StudentRepository studentRepository;
     private final OrganizationRepository organizationRepository;
     private final UserRepository userRepository;
+    private final ClassroomRepository classroomRepository;
 
     @Override
     public StudentResponse createStudent(StudentRequest request) {
@@ -36,13 +39,32 @@ public class StudentServiceImpl implements StudentService {
         Organization organization = organizationRepository.findById(request.getOrganizationId())
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
-        // Check uniqueness within same organization only (not globally)
-        if (studentRepository.existsByStudentIdAndOrganization(request.getStudentId(), organization)) {
-            throw new BadRequestException("Student ID already exists in this organization: " + request.getStudentId());
+        Classroom classroom = null;
+        if (request.getClassroomId() != null) {
+            classroom = classroomRepository.findById(request.getClassroomId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Classroom not found"));
+            // Auto-derive class details from classroom
+            request.setClassName(classroom.getClassroomName());
+            request.setSection(classroom.getSection());
+            request.setSession(classroom.getSession());
+        } else {
+            // Fallback for old logic (if someone doesn't send classroomId)
+            if (request.getClassName() == null || request.getClassName().isBlank()) {
+                throw new BadRequestException("Either classroomId or className is required");
+            }
+        }
+
+        // Auto-generate Student ID: ST{orgId}{timestamp}
+        String autoStudentId = "ST" + organization.getId() + System.currentTimeMillis();
+
+        // Unique check for auto-generated ID (optional, but safe)
+        if (studentRepository.existsByStudentIdAndOrganization(autoStudentId, organization)) {
+            // Extremely rare, but handle just in case
+            autoStudentId = autoStudentId + "X";
         }
 
         Student student = Student.builder()
-                .studentId(request.getStudentId())
+                .studentId(autoStudentId) // Generated, ignores request
                 .admissionDate(request.getAdmissionDate())
                 .className(request.getClassName())
                 .section(request.getSection())
@@ -50,12 +72,14 @@ public class StudentServiceImpl implements StudentService {
                 .guardianName(request.getGuardianName())
                 .guardianContact(request.getGuardianContact())
                 .guardianEmail(request.getGuardianEmail())
+                .session(request.getSession())
                 .optionalFeeTypes(request.getOptionalFeeTypes())
                 .status(request.getStatus() != null ?
                         StudentStatus.valueOf(request.getStatus().toUpperCase()) :
                         StudentStatus.ACTIVE)
                 .user(user)
                 .organization(organization)
+                .classroom(classroom) // Link to classroom
                 .build();
 
         Student savedStudent = studentRepository.save(student);
@@ -91,8 +115,21 @@ public class StudentServiceImpl implements StudentService {
         Student student = studentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + id));
 
-        student.setClassName(request.getClassName());
-        student.setSection(request.getSection());
+        // If classroomId is sent, update the link and derived fields
+        if (request.getClassroomId() != null) {
+            Classroom classroom = classroomRepository.findById(request.getClassroomId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Classroom not found"));
+            student.setClassroom(classroom);
+            student.setClassName(classroom.getClassroomName());
+            student.setSection(classroom.getSection());
+            student.setSession(classroom.getSession());
+        } else {
+            // Fallback: update fields directly
+            if (request.getClassName() != null) student.setClassName(request.getClassName());
+            if (request.getSection() != null) student.setSection(request.getSection());
+            if (request.getSession() != null) student.setSession(request.getSession());
+        }
+
         student.setRollNumber(request.getRollNumber());
         student.setGuardianName(request.getGuardianName());
         student.setGuardianContact(request.getGuardianContact());
@@ -131,8 +168,14 @@ public class StudentServiceImpl implements StudentService {
         Organization organization = organizationRepository.findById(organizationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Organization not found"));
 
+        // Try to find session from any ACTIVE classroom with this name
+        // This ensures only current session's students are returned
         return studentRepository.findByOrganizationAndClassName(organization, className)
                 .stream()
+                .filter(s -> s.getSession() == null ||
+                        // If student has session, it must match an ACTIVE classroom's session
+                        studentRepository.findByOrganizationAndClassName(organization, className)
+                                .stream().anyMatch(st -> st.getSession() != null))
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -156,6 +199,17 @@ public class StudentServiceImpl implements StudentService {
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public List<StudentResponse> getStudentsByClassroom(Long classroomId) {
+        if (!classroomRepository.existsById(classroomId)) {
+            throw new ResourceNotFoundException("Classroom not found");
+        }
+        return studentRepository.findByClassroomId(classroomId)
+                .stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
     private StudentResponse mapToResponse(Student student) {
         return StudentResponse.builder()
                 .id(student.getId())
@@ -167,6 +221,7 @@ public class StudentServiceImpl implements StudentService {
                 .guardianName(student.getGuardianName())
                 .guardianContact(student.getGuardianContact())
                 .guardianEmail(student.getGuardianEmail())
+                .session(student.getSession())
                 .optionalFeeTypes(student.getOptionalFeeTypes())
                 .status(student.getStatus().name())
                 .userId(student.getUser().getId())
@@ -174,6 +229,7 @@ public class StudentServiceImpl implements StudentService {
                 .userEmail(student.getUser().getEmail())
                 .organizationId(student.getOrganization().getId())
                 .organizationName(student.getOrganization().getOrganizationName())
+                .classroomId(student.getClassroom() != null ? student.getClassroom().getId() : null)
                 .build();
     }
 }

@@ -16,7 +16,7 @@ public class ClassroomRequest {
     @NotBlank(message = "Classroom name is required")
     private String classroomName;
 
-    @NotBlank(message = "Class code is required")
+    // classCode is auto-generated — not required from frontend
     private String classCode;
 
     private String section;

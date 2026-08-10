@@ -15,11 +15,10 @@ import lombok.*;
 @Builder
 public class Classroom extends BaseEntity {
 
-    @Column(name = "classroom_name", nullable = false, unique = true)
     private String classroomName;  // e.g., "Class 10-A", "Room 101"
 
-    @Column(name = "class_code", unique = true, nullable = false)
-    private String classCode;  // e.g., "CLS-001"
+    @Column(name = "class_code", nullable = false)
+    private String classCode;  // auto-generated, e.g., "CLS-10A-2025-26-1234"
 
     private String section;  // A, B, C
 

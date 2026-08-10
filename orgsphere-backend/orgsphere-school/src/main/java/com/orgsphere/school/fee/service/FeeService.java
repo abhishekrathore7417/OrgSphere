@@ -29,4 +29,7 @@ public interface FeeService {
     List<FeeResponse> getOverdueFees(Long organizationId);
 
     List<FeeResponse> getFeesByDateRange(Long organizationId, LocalDate start, LocalDate end);
+
+    List<FeeResponse> generateFeesForClassroom(Long classroomId);
+
 }

@@ -33,4 +33,7 @@ public class Organization extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private AccountStatus status;
+
+    @Column(name = "late_fee_percent", columnDefinition = "DOUBLE DEFAULT 5.0")
+    private Double lateFeePercent = 5.0;
 }

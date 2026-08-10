@@ -22,6 +22,7 @@ public class StudentResponse {
     private String guardianName;
     private String guardianContact;
     private String guardianEmail;
+    private String session;
     private String status;
     private Long userId;
     private String userFullName;
@@ -29,4 +30,5 @@ public class StudentResponse {
     private Long organizationId;
     private String organizationName;
     private String optionalFeeTypes;
+    private Long classroomId;
 }
