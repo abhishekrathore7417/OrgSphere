@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
 import { companyApi } from '../../api/companyApi';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 
 /* ── Status config ── */
 const STATUS = {
@@ -159,7 +158,7 @@ export default function StudentAttendance() {
     const label = classroom?.classroomName || `Classroom #${classroomId}`;
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-5xl mx-auto space-y-5">
 
                 {/* Breadcrumb */}
@@ -433,6 +432,6 @@ export default function StudentAttendance() {
                     </div>
                 )}
             </div>
-        </SchoolLayout>
+        </>
     );
 }

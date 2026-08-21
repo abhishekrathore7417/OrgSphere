@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
-import CompanyLayout from '../../components/layout/CompanyLayout';
 
 const STATUS_STYLE = {
     ACTIVE:      'bg-green-50 text-green-700 border-green-100',
@@ -51,7 +50,7 @@ const CompanyAllEmployees = () => {
     });
 
     return (
-        <CompanyLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto space-y-5">
                 {/* Header */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
@@ -153,7 +152,7 @@ const CompanyAllEmployees = () => {
                     </div>
                 )}
             </div>
-        </CompanyLayout>
+        </>
     );
 };
 

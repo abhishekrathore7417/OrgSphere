@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
-import CompanyLayout from '../../components/layout/CompanyLayout';
 
 const STATUS_STYLE = {
     PENDING:  'bg-amber-50 text-amber-600 border-amber-100',
@@ -68,7 +67,7 @@ const CompanyAllLeaves = () => {
     const rejected = leaves.filter(l => l.status === 'REJECTED').length;
 
     return (
-        <CompanyLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto space-y-5">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
@@ -173,7 +172,7 @@ const CompanyAllLeaves = () => {
                     </div>
                 )}
             </div>
-        </CompanyLayout>
+        </>
     );
 };
 

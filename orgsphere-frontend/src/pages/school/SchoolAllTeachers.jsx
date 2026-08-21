@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
 import { companyApi } from '../../api/companyApi';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 
 const STATUS_STYLE = {
     ACTIVE:      'bg-green-50 text-green-700 border-green-100',
@@ -72,7 +71,7 @@ const SchoolAllTeachers = () => {
     const deptNames = [...new Set(enriched.map(t => t.department).filter(d => d !== '—'))];
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto space-y-5">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
@@ -180,7 +179,7 @@ const SchoolAllTeachers = () => {
                     </div>
                 )}
             </div>
-        </SchoolLayout>
+        </>
     );
 };
 

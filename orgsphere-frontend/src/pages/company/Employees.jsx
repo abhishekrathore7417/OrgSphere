@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import { userApi } from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
 import { ViewToggle, useViewMode } from '../../components/common/ViewToggle';
 
@@ -142,7 +141,7 @@ const Employees = () => {
     };
 
     return (
-        <CompanyLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 {/* Breadcrumb */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
@@ -259,7 +258,7 @@ const Employees = () => {
                     </div>
                 </form>
             </Modal>
-        </CompanyLayout>
+        </>
     );
 };
 

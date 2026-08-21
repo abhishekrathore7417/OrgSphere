@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
 const F = ({ label, children }) => <div><label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>{children}</div>;
@@ -170,7 +169,7 @@ const FeeStructure = () => {
     };
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-6xl mx-auto space-y-6">
 
                 {/* Header */}
@@ -377,7 +376,7 @@ const FeeStructure = () => {
                     </div>
                 </Modal>
             </div>
-        </SchoolLayout>
+        </>
     );
 };
 

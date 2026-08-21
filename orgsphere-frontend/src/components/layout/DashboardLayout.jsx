@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { NavLink, useNavigate, useLocation } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation, Outlet } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '../../features/auth/authSlice';
+import { Icon } from '@iconify/react';
 
 const ChevronDown = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -40,18 +41,96 @@ const parseActiveRoute = (pathname) => {
     const schoolDept    = pathname.match(/^\/school\/departments\/([^/]+)/);
     const companyDept   = pathname.match(/^\/company\/departments\/([^/]+)/);
     return {
-        activeClassroomId:  crMatch     ? crMatch[1]     : null,
-        activeSchoolDept:   schoolDept  ? schoolDept[1]  : null,
-        activeCompanyDept:  companyDept ? companyDept[1] : null,
+        activeClassroomId:  crMatch     ? decodeURIComponent(crMatch[1])     : null,
+        activeSchoolDept:   schoolDept  ? decodeURIComponent(schoolDept[1])  : null,
+        activeCompanyDept:  companyDept ? decodeURIComponent(companyDept[1]) : null,
     };
 };
+
+// ── Child item with expandable sub-tabs ───────────────────────
+// groupKey: 'classrooms' | 'departments'
+// basePath: '/school/...' | '/company/...'
+const ChildGroup = ({ child, groupKey, basePath, isChildActive, navigate }) => {
+    const [open, setOpen] = useState(false);
+
+    // Auto-close when navigating away from this child (don't auto-open on refresh)
+    useEffect(() => { 
+        if (!isChildActive) setOpen(false);
+    }, [isChildActive]);
+
+    // Always compute subTabs from child.path so ANY child can be expanded
+    let subTabs = [];
+    if (groupKey === 'classrooms') {
+        const m = child.path.match(/\/classrooms\/([^/]+)/);
+        if (m) subTabs = CLASSROOM_TABS(m[1]);
+    } else if (groupKey === 'departments' && basePath?.startsWith('/school')) {
+        const m = child.path.match(/\/departments\/([^/]+)/);
+        if (m) subTabs = SCHOOL_DEPT_TABS(decodeURIComponent(m[1]));
+    } else if (groupKey === 'departments' && basePath?.startsWith('/company')) {
+        const m = child.path.match(/\/departments\/([^/]+)/);
+        if (m) subTabs = COMPANY_DEPT_TABS(decodeURIComponent(m[1]));
+    }
+
+    const hasSubs = subTabs.length > 0;
+
+    return (
+        <div>
+            {/* Child row */}
+            <div className={`flex items-center gap-2 pl-2 pr-2 py-1.5 rounded-lg text-sm transition-colors duration-150 ${
+                isChildActive ? 'text-[#553EEB]' : 'text-gray-700 hover:bg-gray-50'
+            }`}>
+                <button
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                    onClick={() => {
+                        navigate(child.path);
+                        if (!open) setOpen(true);
+                    }}
+                >
+                    <Icon icon="solar:record-circle-linear" width="14" height="14" className="shrink-0" />
+                    <span className="truncate text-sm">{child.label}</span>
+                </button>
+                {hasSubs && (
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+                        className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''} ${isChildActive ? 'text-[#553EEB]' : 'text-gray-400'}`}
+                    >
+                        <Icon icon="solar:alt-arrow-right-linear" width="13" height="13" />
+                    </button>
+                )}
+            </div>
+
+            {/* Sub-tabs */}
+            {open && hasSubs && (
+                <div className="ml-4 pl-2 border-l border-gray-100 space-y-0.5 my-0.5">
+                    {subTabs.map(tab => (
+                        <NavLink
+                            key={tab.path}
+                            to={tab.path}
+                            className={({ isActive }) =>
+                                `flex items-center gap-2 px-2 py-1.5 rounded-lg text-xs transition-colors duration-150 ${
+                                    isActive
+                                        ? 'text-[#553EEB] font-medium'
+                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                                }`
+                            }
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 opacity-60" />
+                            <span className="truncate">{tab.label}</span>
+                        </NavLink>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 
 // ── Expandable sidebar group ──────────────────────────────────
 const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, activeSchoolDept, activeCompanyDept, navigate }) => {
     const location = useLocation();
     const isInsideGroup = location.pathname.startsWith(item.basePath || item.path);
 
-    const [open, setOpen]         = useState(isInsideGroup || !!item.defaultOpen);
+    const [open, setOpen] = useState(!!item.defaultOpen);
     const [children, setChildren] = useState([]);
     const [loaded, setLoaded]     = useState(false);
     const [loading, setLoading]   = useState(false);
@@ -68,8 +147,10 @@ const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, active
 
     useEffect(() => { if (open && !loaded) load(); }, [open]);
 
-    // Auto-open when inside group
-    useEffect(() => { if (isInsideGroup) setOpen(true); }, [location.pathname]);
+    // Auto-close when navigating away (but don't auto-open on refresh)
+    useEffect(() => { 
+        if (!isInsideGroup) setOpen(false);
+    }, [isInsideGroup]);
 
     // Reload when navigating to list page (new items may have been added)
     useEffect(() => {
@@ -80,30 +161,30 @@ const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, active
         <div>
             {/* Group header */}
             <div
-                className={`w-full flex items-center justify-between px-3 py-1.5 rounded-lg text-sm transition-colors duration-150 ${
-                    isInsideGroup
-                        ? 'bg-violet-50 text-violet-700 font-semibold'
-                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${
+                    open || isInsideGroup
+                        ? 'bg-[#F0EFFF] text-[#553EEB]'
+                        : 'text-gray-700 hover:bg-gray-50'
                 }`}
             >
                 <div 
-                    className="flex items-center gap-3 flex-1 cursor-pointer truncate py-0.5"
+                    className="flex items-center gap-3 flex-1 cursor-pointer truncate"
                     onClick={() => {
                         navigate(item.path);
                         if (!open) setOpen(true);
                     }}
                 >
-                    <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isInsideGroup ? 'text-violet-600' : 'text-gray-400'}`}>
-                        {item.icon}
+                    <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${open || isInsideGroup ? 'text-[#553EEB]' : 'text-gray-600'}`}>
+                        <Icon icon={item.icon || 'solar:folder-with-files-linear'} width="20" height="20" />
                     </span>
                     {sidebarOpen && <span className="truncate text-left">{item.label}</span>}
                 </div>
                 {sidebarOpen && (
                     <button 
                         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-                        className={`shrink-0 p-1 rounded-md hover:bg-gray-200 transition-colors ${isInsideGroup ? 'text-violet-500 hover:bg-violet-100' : 'text-gray-400'}`}
+                        className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-90' : ''} ${open || isInsideGroup ? 'text-[#553EEB]' : 'text-gray-400'}`}
                     >
-                        {open ? <ChevronDown /> : <ChevronRight />}
+                        <Icon icon="solar:alt-arrow-right-linear" width="16" height="16" />
                     </button>
                 )}
             </div>
@@ -121,58 +202,22 @@ const TreeGroup = ({ item, sidebarOpen, fetchChildren, activeClassroomId, active
                     ) : (
                         children.map(child => {
                             const isClassroomActive = item.groupKey === 'classrooms' &&
-                                activeClassroomId && child.path.includes(`/classrooms/${activeClassroomId}/`);
+                                activeClassroomId && child.path === `/school/classrooms/${activeClassroomId}`;
                             const isSchoolDeptActive = item.groupKey === 'departments' && item.basePath?.startsWith('/school') &&
-                                activeSchoolDept && child.path.includes(`/school/departments/${activeSchoolDept}/`);
+                                activeSchoolDept && child.path === `/school/departments/${activeSchoolDept}`;
                             const isCompanyDeptActive = item.groupKey === 'departments' && item.basePath?.startsWith('/company') &&
-                                activeCompanyDept && child.path.includes(`/company/departments/${activeCompanyDept}/`);
+                                activeCompanyDept && child.path === `/company/departments/${activeCompanyDept}`;
                             const isChildActive = isClassroomActive || isSchoolDeptActive || isCompanyDeptActive;
 
-                            let subTabs = [];
-                            if (isClassroomActive)  subTabs = CLASSROOM_TABS(activeClassroomId);
-                            if (isSchoolDeptActive)  subTabs = SCHOOL_DEPT_TABS(activeSchoolDept);
-                            if (isCompanyDeptActive) subTabs = COMPANY_DEPT_TABS(activeCompanyDept);
-
                             return (
-                                <div key={child.path}>
-                                    <NavLink
-                                        to={child.path}
-                                        className={({ isActive }) => {
-                                            const active = isActive || isChildActive;
-                                            return `flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors duration-150 ${
-                                                active
-                                                    ? 'bg-violet-100 text-violet-700 font-semibold'
-                                                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 font-medium'
-                                            }`;
-                                        }}
-                                    >
-                                        <span className="w-1.5 h-1.5 rounded-full bg-current shrink-0 opacity-60" />
-                                        <span className="truncate">{child.label}</span>
-                                        {isChildActive && <ChevronDown />}
-                                    </NavLink>
-
-                                    {/* Sub-tabs when inside this classroom/department */}
-                                    {isChildActive && subTabs.length > 0 && (
-                                        <div className="ml-3 pl-2 border-l border-violet-100 space-y-0.5 mt-0.5 mb-0.5">
-                                            {subTabs.map(tab => (
-                                                <NavLink
-                                                    key={tab.path}
-                                                    to={tab.path}
-                                                    className={({ isActive }) =>
-                                                        `flex items-center gap-2 px-2 py-1 rounded-md text-xs transition-colors duration-150 ${
-                                                            isActive
-                                                                ? 'bg-violet-200 text-violet-800 font-semibold'
-                                                                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600 font-medium'
-                                                        }`
-                                                    }
-                                                >
-                                                    <span className="w-1 h-1 rounded-full bg-current shrink-0 opacity-50" />
-                                                    {tab.label}
-                                                </NavLink>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                <ChildGroup
+                                    key={child.path}
+                                    child={child}
+                                    groupKey={item.groupKey}
+                                    basePath={item.basePath}
+                                    isChildActive={isChildActive}
+                                    navigate={navigate}
+                                />
                             );
                         })
                     )}
@@ -203,10 +248,10 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
         <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
 
             {/* Sidebar */}
-            <aside className={`bg-white border-r border-gray-200 flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-60' : 'w-14'} shrink-0`}>
+            <aside className={`bg-white border-r border-gray-100 flex flex-col transition-all duration-300 ${sidebarOpen ? 'w-[270px]' : 'w-[80px]'} shrink-0`}>
 
                 {/* Logo */}
-                <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100">
+                <div className="flex items-center gap-3 px-4 py-4 border-b border-gray-100 shrink-0">
                     <div className="w-7 h-7 rounded-lg bg-violet-600 flex items-center justify-center shrink-0">
                         <span className="text-white text-xs font-bold">OS</span>
                     </div>
@@ -219,7 +264,7 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
                 </div>
 
                 {/* Nav */}
-                <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
+                <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
 
                     {/* FLAT MODE */}
                     {navItems && navItems.map((item) => (
@@ -229,18 +274,17 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
                             className={({ isActive }) =>
                                 `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${
                                     isActive
-                                        ? 'bg-violet-50 text-violet-700 font-semibold'
-                                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+                                        ? 'bg-[#F0EFFF] text-[#553EEB]'
+                                        : 'text-gray-700 hover:bg-gray-50'
                                 }`
                             }
                         >
                             {({ isActive }) => (
                                 <>
-                                    <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isActive ? 'text-violet-600' : 'text-gray-400'}`}>
-                                        {item.icon}
+                                    <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isActive ? 'text-[#553EEB]' : 'text-gray-600'}`}>
+                                        <Icon icon={item.icon || 'solar:widget-linear'} width="20" height="20" />
                                     </span>
-                                    {sidebarOpen && <span className="truncate">{item.label}</span>}
-                                    {isActive && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600 shrink-0" />}
+                                    {sidebarOpen && <span className="truncate">{item.label || item.name}</span>}
                                 </>
                             )}
                         </NavLink>
@@ -269,18 +313,17 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
                                 className={({ isActive }) =>
                                     `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${
                                         isActive
-                                            ? 'bg-violet-50 text-violet-700 font-semibold'
-                                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800 font-medium'
+                                            ? 'bg-[#F0EFFF] text-[#553EEB]'
+                                            : 'text-gray-700 hover:bg-gray-50'
                                     }`
                                 }
                             >
                                 {({ isActive }) => (
                                     <>
-                                        <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isActive ? 'text-violet-600' : 'text-gray-400'}`}>
-                                            {item.icon}
+                                        <span className={`shrink-0 w-5 h-5 flex items-center justify-center ${isActive ? 'text-[#553EEB]' : 'text-gray-600'}`}>
+                                            <Icon icon={item.icon || 'solar:widget-linear'} width="20" height="20" />
                                         </span>
-                                        {sidebarOpen && <span className="truncate">{item.label}</span>}
-                                        {isActive && sidebarOpen && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-violet-600 shrink-0" />}
+                                        {sidebarOpen && <span className="truncate">{item.label || item.name}</span>}
                                     </>
                                 )}
                             </NavLink>
@@ -346,7 +389,11 @@ const DashboardLayout = ({ navItems, treeItems, fetchChildren, orgLabel, childre
                         )}
                     </div>
                 </header>
-                <main className="flex-1 overflow-y-auto bg-gray-50">{children}</main>
+                <main className="flex-1 overflow-y-auto bg-gray-50">
+                    <div className="h-full">
+                        {children || <Outlet />}
+                    </div>
+                </main>
             </div>
         </div>
     );

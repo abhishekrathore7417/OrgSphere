@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
 const NAV = [
@@ -57,7 +56,7 @@ const SchoolDepartments = () => {
     };
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 {/* Header */}
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
@@ -142,7 +141,7 @@ const SchoolDepartments = () => {
                     </div>
                 </form>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 export default SchoolDepartments;

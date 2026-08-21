@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
 const FREQ_LABEL = { MONTHLY: 'Monthly', QUARTERLY: 'Quarterly', YEARLY: 'Yearly', ONE_TIME: 'One Time' };
@@ -167,7 +166,7 @@ const SchoolAllFees = () => {
     const totalAmt = fees.filter(f => f.status === 'PAID').reduce((sum, f) => sum + (f.paidAmount || 0), 0);
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto space-y-5">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-1">
                     <button onClick={() => navigate('/school/dashboard')} className="hover:text-violet-600">Dashboard</button>
@@ -393,7 +392,7 @@ const SchoolAllFees = () => {
                     )}
                 </div>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 

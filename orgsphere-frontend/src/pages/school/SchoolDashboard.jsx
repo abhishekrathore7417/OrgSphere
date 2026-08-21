@@ -5,7 +5,6 @@ import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import { schoolApi } from '../../api/schoolApi';
 import { companyApi } from '../../api/companyApi';
 import { subscriptionApi } from '../../api/subscriptionApi';
@@ -215,7 +214,7 @@ const SchoolDashboard = () => {
     ];
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 space-y-6 max-w-7xl mx-auto bg-gray-50/50 min-h-screen pb-12">
 
                 {/* ── Welcome Banner ── */}
@@ -473,7 +472,7 @@ const SchoolDashboard = () => {
                     </div>
                 </div>
             </div>
-        </SchoolLayout>
+        </>
     );
 };
 

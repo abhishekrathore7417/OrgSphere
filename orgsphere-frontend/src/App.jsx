@@ -60,61 +60,65 @@ function App() {
 
                 {/* 🏢 Company 🏢 */}
                 <Route element={<ProtectedRoute allowedRoles={['ORG_ADMIN', 'EMPLOYEE']} />}>
-                    <Route path="/company/dashboard" element={<CompanyDashboard />} />
-                    <Route path="/company/subscription" element={<CompanyLayout><SubscriptionPage /></CompanyLayout>} />
-                    <Route path="/company/settings" element={<CompanyLayout><SettingsPage /></CompanyLayout>} />
+                    <Route element={<CompanyLayout />}>
+                        <Route path="/company/dashboard" element={<CompanyDashboard />} />
+                        <Route path="/company/subscription" element={<SubscriptionPage />} />
+                        <Route path="/company/settings" element={<SettingsPage />} />
 
-                    {/* ERP features locked when subscription is expired */}
-                    <Route path="/company/departments" element={<SubscriptionLockGuard><Departments /></SubscriptionLockGuard>} />
-                    <Route path="/company/departments/:deptName" element={<SubscriptionLockGuard><DepartmentDetail /></SubscriptionLockGuard>} />
-                    <Route path="/company/departments/:deptName/employees" element={<SubscriptionLockGuard><Employees /></SubscriptionLockGuard>} />
-                    <Route path="/company/departments/:deptName/leaves" element={<SubscriptionLockGuard><LeaveRequests /></SubscriptionLockGuard>} />
-                    <Route path="/company/departments/:deptName/attendance" element={<SubscriptionLockGuard><Attendance /></SubscriptionLockGuard>} />
-                    <Route path="/company/departments/:deptName/salary" element={<SubscriptionLockGuard><EmployeeSalary /></SubscriptionLockGuard>} />
-                    {/* Overview pages */}
-                    <Route path="/company/all-employees"  element={<SubscriptionLockGuard><CompanyAllEmployees /></SubscriptionLockGuard>} />
-                    <Route path="/company/all-leaves"     element={<SubscriptionLockGuard><CompanyAllLeaves /></SubscriptionLockGuard>} />
-                    <Route path="/company/all-attendance" element={<SubscriptionLockGuard><CompanyAllAttendance /></SubscriptionLockGuard>} />
-                    {/* legacy redirects */}
-                    <Route path="/company/employees"  element={<Navigate to="/company/departments" replace />} />
-                    <Route path="/company/leaves"     element={<Navigate to="/company/departments" replace />} />
-                    <Route path="/company/attendance" element={<Navigate to="/company/departments" replace />} />
+                        {/* ERP features locked when subscription is expired */}
+                        <Route path="/company/departments" element={<SubscriptionLockGuard><Departments /></SubscriptionLockGuard>} />
+                        <Route path="/company/departments/:deptName" element={<SubscriptionLockGuard><DepartmentDetail /></SubscriptionLockGuard>} />
+                        <Route path="/company/departments/:deptName/employees" element={<SubscriptionLockGuard><Employees /></SubscriptionLockGuard>} />
+                        <Route path="/company/departments/:deptName/leaves" element={<SubscriptionLockGuard><LeaveRequests /></SubscriptionLockGuard>} />
+                        <Route path="/company/departments/:deptName/attendance" element={<SubscriptionLockGuard><Attendance /></SubscriptionLockGuard>} />
+                        <Route path="/company/departments/:deptName/salary" element={<SubscriptionLockGuard><EmployeeSalary /></SubscriptionLockGuard>} />
+                        {/* Overview pages */}
+                        <Route path="/company/all-employees"  element={<SubscriptionLockGuard><CompanyAllEmployees /></SubscriptionLockGuard>} />
+                        <Route path="/company/all-leaves"     element={<SubscriptionLockGuard><CompanyAllLeaves /></SubscriptionLockGuard>} />
+                        <Route path="/company/all-attendance" element={<SubscriptionLockGuard><CompanyAllAttendance /></SubscriptionLockGuard>} />
+                        {/* legacy redirects */}
+                        <Route path="/company/employees"  element={<Navigate to="/company/departments" replace />} />
+                        <Route path="/company/leaves"     element={<Navigate to="/company/departments" replace />} />
+                        <Route path="/company/attendance" element={<Navigate to="/company/departments" replace />} />
+                    </Route>
                 </Route>
 
                 {/* 🏫 School 🏫 */}
                 <Route element={<ProtectedRoute allowedRoles={['ORG_ADMIN', 'TEACHER']} />}>
-                    <Route path="/school/dashboard" element={<SchoolDashboard />} />
-                    <Route path="/school/subscription" element={<SchoolLayout><SubscriptionPage /></SchoolLayout>} />
-                    <Route path="/school/settings" element={<SchoolLayout><SettingsPage /></SchoolLayout>} />
+                    <Route element={<SchoolLayout />}>
+                        <Route path="/school/dashboard" element={<SchoolDashboard />} />
+                        <Route path="/school/subscription" element={<SubscriptionPage />} />
+                        <Route path="/school/settings" element={<SettingsPage />} />
 
-                    {/* ERP features locked when subscription is expired */}
-                    <Route path="/school/fee-structure" element={<SubscriptionLockGuard><FeeStructure /></SubscriptionLockGuard>} />
-                    <Route path="/school/academic-year" element={<SubscriptionLockGuard><AcademicYear /></SubscriptionLockGuard>} />
-                    <Route path="/school/announcements" element={<SubscriptionLockGuard><Announcements /></SubscriptionLockGuard>} />
-                    <Route path="/school/all-students" element={<SubscriptionLockGuard><SchoolAllStudents /></SubscriptionLockGuard>} />
-                    <Route path="/school/all-teachers" element={<SubscriptionLockGuard><SchoolAllTeachers /></SubscriptionLockGuard>} />
-                    <Route path="/school/all-fees"     element={<SubscriptionLockGuard><SchoolAllFees /></SubscriptionLockGuard>} />
+                        {/* ERP features locked when subscription is expired */}
+                        <Route path="/school/fee-structure" element={<SubscriptionLockGuard><FeeStructure /></SubscriptionLockGuard>} />
+                        <Route path="/school/academic-year" element={<SubscriptionLockGuard><AcademicYear /></SubscriptionLockGuard>} />
+                        <Route path="/school/announcements" element={<SubscriptionLockGuard><Announcements /></SubscriptionLockGuard>} />
+                        <Route path="/school/all-students" element={<SubscriptionLockGuard><SchoolAllStudents /></SubscriptionLockGuard>} />
+                        <Route path="/school/all-teachers" element={<SubscriptionLockGuard><SchoolAllTeachers /></SubscriptionLockGuard>} />
+                        <Route path="/school/all-fees"     element={<SubscriptionLockGuard><SchoolAllFees /></SubscriptionLockGuard>} />
 
-                    {/* Classrooms → student context */}
-                    <Route path="/school/classrooms" element={<SubscriptionLockGuard><Classrooms /></SubscriptionLockGuard>} />
-                    <Route path="/school/classrooms/:classroomId" element={<SubscriptionLockGuard><ClassroomDetail /></SubscriptionLockGuard>} />
-                    <Route path="/school/classrooms/:classroomId/students"   element={<SubscriptionLockGuard><Students /></SubscriptionLockGuard>} />
-                    <Route path="/school/classrooms/:classroomId/attendance" element={<SubscriptionLockGuard><StudentAttendance /></SubscriptionLockGuard>} />
-                    <Route path="/school/classrooms/:classroomId/fees"       element={<SubscriptionLockGuard><Fees /></SubscriptionLockGuard>} />
-                    <Route path="/school/classrooms/:classroomId/leaves"     element={<SubscriptionLockGuard><StudentLeaves /></SubscriptionLockGuard>} />
+                        {/* Classrooms → student context */}
+                        <Route path="/school/classrooms" element={<SubscriptionLockGuard><Classrooms /></SubscriptionLockGuard>} />
+                        <Route path="/school/classrooms/:classroomId" element={<SubscriptionLockGuard><ClassroomDetail /></SubscriptionLockGuard>} />
+                        <Route path="/school/classrooms/:classroomId/students"   element={<SubscriptionLockGuard><Students /></SubscriptionLockGuard>} />
+                        <Route path="/school/classrooms/:classroomId/attendance" element={<SubscriptionLockGuard><StudentAttendance /></SubscriptionLockGuard>} />
+                        <Route path="/school/classrooms/:classroomId/fees"       element={<SubscriptionLockGuard><Fees /></SubscriptionLockGuard>} />
+                        <Route path="/school/classrooms/:classroomId/leaves"     element={<SubscriptionLockGuard><StudentLeaves /></SubscriptionLockGuard>} />
 
-                    {/* School Departments → teacher context */}
-                    <Route path="/school/departments" element={<SubscriptionLockGuard><SchoolDepartments /></SubscriptionLockGuard>} />
-                    <Route path="/school/departments/:deptName" element={<SubscriptionLockGuard><SchoolDepartmentDetail /></SubscriptionLockGuard>} />
-                    <Route path="/school/departments/:deptName/teachers"    element={<SubscriptionLockGuard><Teachers /></SubscriptionLockGuard>} />
-                    <Route path="/school/departments/:deptName/attendance"  element={<SubscriptionLockGuard><TeacherAttendance /></SubscriptionLockGuard>} />
-                    <Route path="/school/departments/:deptName/leaves"      element={<SubscriptionLockGuard><TeacherLeaves /></SubscriptionLockGuard>} />
-                    <Route path="/school/departments/:deptName/salary"      element={<SubscriptionLockGuard><TeacherSalary /></SubscriptionLockGuard>} />
+                        {/* School Departments → teacher context */}
+                        <Route path="/school/departments" element={<SubscriptionLockGuard><SchoolDepartments /></SubscriptionLockGuard>} />
+                        <Route path="/school/departments/:deptName" element={<SubscriptionLockGuard><SchoolDepartmentDetail /></SubscriptionLockGuard>} />
+                        <Route path="/school/departments/:deptName/teachers"    element={<SubscriptionLockGuard><Teachers /></SubscriptionLockGuard>} />
+                        <Route path="/school/departments/:deptName/attendance"  element={<SubscriptionLockGuard><TeacherAttendance /></SubscriptionLockGuard>} />
+                        <Route path="/school/departments/:deptName/leaves"      element={<SubscriptionLockGuard><TeacherLeaves /></SubscriptionLockGuard>} />
+                        <Route path="/school/departments/:deptName/salary"      element={<SubscriptionLockGuard><TeacherSalary /></SubscriptionLockGuard>} />
 
-                    {/* legacy redirects */}
-                    <Route path="/school/students" element={<Navigate to="/school/classrooms" replace />} />
-                    <Route path="/school/teachers" element={<Navigate to="/school/departments" replace />} />
-                    <Route path="/school/fees"     element={<Navigate to="/school/classrooms" replace />} />
+                        {/* legacy redirects */}
+                        <Route path="/school/students" element={<Navigate to="/school/classrooms" replace />} />
+                        <Route path="/school/teachers" element={<Navigate to="/school/departments" replace />} />
+                        <Route path="/school/fees"     element={<Navigate to="/school/classrooms" replace />} />
+                    </Route>
                 </Route>
             </Routes>
         </Router>

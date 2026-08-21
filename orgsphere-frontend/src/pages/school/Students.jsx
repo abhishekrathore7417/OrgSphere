@@ -5,7 +5,6 @@ import {toast} from 'react-toastify';
 import {schoolApi} from '../../api/schoolApi';
 import {userApi} from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 import {ViewToggle, useViewMode} from '../../components/common/ViewToggle';
 
@@ -192,7 +191,7 @@ const Students = () => {
     const inactiveStudents = students.filter(s => s.status === 'INACTIVE').length;
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/school/dashboard')} className="hover:text-blue-600">Dashboard
@@ -653,7 +652,7 @@ const Students = () => {
                     </div>
                 </form>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 

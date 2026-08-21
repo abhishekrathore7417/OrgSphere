@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import { schoolApi } from '../../api/schoolApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
 const buildNav = (d) => [
@@ -85,7 +84,7 @@ const TeacherLeaves = () => {
     const reject  = async (id) => { try { await companyApi.rejectLeave(id);  toast.success('Rejected'); load(); } catch { toast.error('Failed'); } };
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={()=>navigate('/school/departments')} className="hover:text-violet-600">Departments</button>
@@ -136,7 +135,7 @@ const TeacherLeaves = () => {
                     <div className="flex gap-3 pt-2"><button type="button" onClick={()=>setModal(false)} className="flex-1 border border-gray-200 text-gray-600 text-sm font-medium py-2.5 rounded-lg hover:bg-gray-50">Cancel</button><button type="submit" disabled={saving} className="flex-1 bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2.5 rounded-lg disabled:opacity-60">{saving?'Saving...':editingId?'Update':'Apply'}</button></div>
                 </form>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 export default TeacherLeaves;

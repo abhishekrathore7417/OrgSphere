@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
 const F = ({ label, children }) => <div><label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>{children}</div>;
@@ -213,7 +212,7 @@ const Fees = () => {
     const label = classroom?.classroomName || `Classroom #${classroomId}`;
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/school/classrooms')} className="hover:text-violet-600">Classrooms</button>
@@ -416,7 +415,7 @@ const Fees = () => {
                     </div>
                 </form>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 

@@ -5,7 +5,6 @@ import { toast } from 'react-toastify';
 import { schoolApi } from '../../api/schoolApi';
 import { companyApi } from '../../api/companyApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 
 const buildNav = (id) => [
@@ -87,7 +86,7 @@ const StudentLeaves = () => {
     const label = classroom?.classroomName || `Classroom #${classroomId}`;
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/school/classrooms')} className="hover:text-violet-600">Classrooms</button>
@@ -141,7 +140,7 @@ const StudentLeaves = () => {
                     </div>
                 </form>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 export default StudentLeaves;

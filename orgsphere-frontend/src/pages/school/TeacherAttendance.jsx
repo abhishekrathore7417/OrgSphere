@@ -5,7 +5,6 @@ import {toast} from 'react-toastify';
 import {companyApi} from '../../api/companyApi';
 import {userApi} from '../../api/userApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import SchoolLayout from '../../components/layout/SchoolLayout';
 import Modal from '../../components/ui/Modal';
 import { schoolApi } from '../../api/schoolApi';  // <--- YEH LINE ADD KARO
 
@@ -188,7 +187,7 @@ const TeacherAttendance = () => {
 
 
     return (
-        <SchoolLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/school/departments')}
@@ -286,7 +285,7 @@ const TeacherAttendance = () => {
                     </div>
                 </form>
             </Modal>
-        </SchoolLayout>
+        </>
     );
 };
 export default TeacherAttendance;

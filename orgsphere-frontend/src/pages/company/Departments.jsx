@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
 
 const NAV = [
@@ -72,7 +71,7 @@ const Departments = () => {
     };
 
     return (
-        <CompanyLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center justify-between mb-6">
                     <div>
@@ -140,7 +139,7 @@ const Departments = () => {
                     </div>
                 </form>
             </Modal>
-        </CompanyLayout>
+        </>
     );
 };
 

@@ -4,7 +4,6 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { companyApi } from '../../api/companyApi';
 import DashboardLayout from '../../components/layout/DashboardLayout';
-import CompanyLayout from '../../components/layout/CompanyLayout';
 import Modal from '../../components/ui/Modal';
 
 const buildNav = (deptName) => [
@@ -145,7 +144,7 @@ const LeaveRequests = () => {
     };
 
     return (
-        <CompanyLayout>
+        <>
             <div className="p-6 max-w-7xl mx-auto">
                 <div className="flex items-center gap-2 text-sm text-gray-400 mb-4">
                     <button onClick={() => navigate('/company/departments')} className="hover:text-violet-600">Departments</button>
@@ -242,7 +241,7 @@ const LeaveRequests = () => {
                     </div>
                 </form>
             </Modal>
-        </CompanyLayout>
+        </>
     );
 };
 

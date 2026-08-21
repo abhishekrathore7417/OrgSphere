@@ -5,7 +5,6 @@ import {
     AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
     Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from 'recharts';
-import CompanyLayout from '../../components/layout/CompanyLayout';
 import { companyApi } from '../../api/companyApi';
 
 /* ── Icons ──────────────────────────────────────────────────── */
@@ -210,7 +209,7 @@ const CompanyDashboard = () => {
     const deptPath  = firstDept ? `/company/departments/${encodeURIComponent(firstDept)}/employees` : '/company/departments';
 
     return (
-        <CompanyLayout>
+        <>
             <div className="p-6 space-y-6 max-w-7xl mx-auto">
 
                 {/* ── Welcome Banner ── */}
@@ -465,7 +464,7 @@ const CompanyDashboard = () => {
                 </div>
 
             </div>
-        </CompanyLayout>
+        </>
     );
 };
 
